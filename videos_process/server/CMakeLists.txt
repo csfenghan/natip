@@ -4,6 +4,8 @@ cmake_minimum_required(VERSION 2.8)
 # Define project name
 project(server)
 
+set(CMAKE_BUILD_TYPE "Debug")  
+
 # Find OpenCV, you may need to set OpenCV_DIR variable
 # to the absolute path to the directory containing OpenCVConfig.cmake file
 # via the command line or GUI

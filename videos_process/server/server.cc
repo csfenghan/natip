@@ -16,6 +16,7 @@ void sent_image(int client_fd, VideoCapture &cap) {
         Mat image;
         vector<unsigned char> data_encode;
         string data_send;
+        char buf[1];
 
         while (cap.read(image)) {
                 imencode(".jpg", image, data_encode);
@@ -28,9 +29,10 @@ void sent_image(int client_fd, VideoCapture &cap) {
 
                 // sending data
                 send(client_fd, data_len.c_str(), strlen(data_len.c_str()), 0);
-                for (int i = 0; i < data_encode.size(); i++)
-                        data_send += data_encode[i];
-                send(client_fd, data_send.c_str(), strlen(data_send.c_str()), 0);
+                for (int i = 0; i < data_encode.size(); i++) {
+                        buf[0] = data_send[i];
+                        send(client_fd, buf, 1, 0);
+                }
 
                 // receive the return information
                 char buf_recv[32];
