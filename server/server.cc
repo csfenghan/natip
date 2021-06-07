@@ -21,10 +21,10 @@ void send_image(int client_fd, VideoCapture &cap) {
                         cerr << "imencode error" << endl;
                         exit(0);
                 }
-
                 // set header size
                 string data_len = to_string(data_encode.size());
-                for (int i = 0; i < 16 - data_len.size(); i++) {
+		int n=16-data_len.size();
+                for (int i = 0; i < n; i++) {
                         data_len += " ";
                 }
                 send(client_fd, data_len.c_str(), strlen(data_len.c_str()), 0);
@@ -32,13 +32,6 @@ void send_image(int client_fd, VideoCapture &cap) {
                 // sending data
                 string data_send(data_encode.begin(), data_encode.end());
                 send(client_fd, data_send.c_str(), data_send.size(), 0);
-                printf("%ld\n", data_send.size());
-
-                // receive the return information
-                char buf_recv[32];
-                printf("wait the respond\n");
-                recv(client_fd, buf_recv, 32, 0);
-                printf("recvived information:%s\n", buf_recv);
         }
 }
 

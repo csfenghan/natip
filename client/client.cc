@@ -28,19 +28,15 @@ void receive_videos(int client_fd, char *output) {
                         for (int i = 0; i < len; i++) {
                                 recv(client_fd, recv_buf, 1, 0);
                                 data[i] = recv_buf[0];
-                                printf("%d|%d\n", i, len);
                         }
-                        printf("image received successfully\n");
 
-                        string back_message = "server has received images\n";
-                        send(client_fd, back_message.c_str(), strlen(back_message.c_str()), 0);
-
-                        image_decode = imdecode(data, IMREAD_UNCHANGED);
+                        image_decode = imdecode(data, CV_LOAD_IMAGE_COLOR);
                         if (image_decode.empty()) {
                                 cerr << "imdecode error" << endl;
                                 exit(0);
                         }
-			imwrite("client.jpg",image_decode);
+                        imshow("client", image_decode);
+			waitKey(30);
                 }
         }
 }
