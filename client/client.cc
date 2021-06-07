@@ -9,11 +9,11 @@ using namespace std;
 using namespace cv;
 
 #define ADDR "127.0.0.1"
-#define PORT 8888
+#define PORT 11111
 
 void receive_videos(int client_fd, char *output) {
         Mat image_decode;
-        vector<unsigned char> data;
+        vector<uchar> data;
         char recv_buf[16];
 
         while (1) {
@@ -28,16 +28,19 @@ void receive_videos(int client_fd, char *output) {
                         for (int i = 0; i < len; i++) {
                                 recv(client_fd, recv_buf, 1, 0);
                                 data[i] = recv_buf[0];
+                                printf("%d|%d\n", i, len);
                         }
                         printf("image received successfully\n");
 
                         string back_message = "server has received images\n";
                         send(client_fd, back_message.c_str(), strlen(back_message.c_str()), 0);
 
-                        image_decode = imdecode(data, CV_LOAD_IMAGE_COLOR);
-                        imshow("client", image_decode);
-                        if (waitKey(30) == 'q')
-                                break;
+                        image_decode = imdecode(data, IMREAD_UNCHANGED);
+                        if (image_decode.empty()) {
+                                cerr << "imdecode error" << endl;
+                                exit(0);
+                        }
+			imwrite("client.jpg",image_decode);
                 }
         }
 }
@@ -45,7 +48,7 @@ void receive_videos(int client_fd, char *output) {
 int main(int argc, char **argv) {
         if (argc != 2) {
                 fprintf(stderr, "usage: %s video.file\n", argv[0]);
-       //         exit(0);
+                //         exit(0);
         }
         int client_fd;
         struct sockaddr_in server_addr;
@@ -55,7 +58,10 @@ int main(int argc, char **argv) {
         server_addr.sin_family = AF_INET;
         server_addr.sin_port = htons(PORT);
         inet_pton(AF_INET, ADDR, &server_addr.sin_addr);
-        connect(client_fd, (struct sockaddr *)&server_addr, sizeof(struct sockaddr));
+        if (connect(client_fd, (struct sockaddr *)&server_addr, sizeof(struct sockaddr)) < 0) {
+                cerr << "connect failed" << endl;
+                exit(0);
+        }
 
         cout << "connection successful" << endl;
         receive_videos(client_fd, argv[1]);

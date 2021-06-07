@@ -10,32 +10,33 @@ using namespace std;
 using namespace cv;
 
 #define ADDR "127.0.0.1"
-#define PORT 8888
+#define PORT 11111
 
-void sent_image(int client_fd, VideoCapture &cap) {
+void send_image(int client_fd, VideoCapture &cap) {
         Mat image;
-        vector<unsigned char> data_encode;
-        string data_send;
-        char buf[1];
+        vector<uchar> data_encode;
 
         while (cap.read(image)) {
-                imencode(".jpg", image, data_encode);
+                if (!imencode(".jpg", image, data_encode)) {
+                        cerr << "imencode error" << endl;
+                        exit(0);
+                }
 
                 // set header size
                 string data_len = to_string(data_encode.size());
                 for (int i = 0; i < 16 - data_len.size(); i++) {
                         data_len += " ";
                 }
+                send(client_fd, data_len.c_str(), strlen(data_len.c_str()), 0);
 
                 // sending data
-                send(client_fd, data_len.c_str(), strlen(data_len.c_str()), 0);
-                for (int i = 0; i < data_encode.size(); i++) {
-                        buf[0] = data_send[i];
-                        send(client_fd, buf, 1, 0);
-                }
+                string data_send(data_encode.begin(), data_encode.end());
+                send(client_fd, data_send.c_str(), data_send.size(), 0);
+                printf("%ld\n", data_send.size());
 
                 // receive the return information
                 char buf_recv[32];
+                printf("wait the respond\n");
                 recv(client_fd, buf_recv, 32, 0);
                 printf("recvived information:%s\n", buf_recv);
         }
@@ -62,7 +63,7 @@ int main(int argc, char **argv) {
         server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
         server_addr.sin_family = AF_INET;
-        server_addr.sin_port = htons(8888);
+        server_addr.sin_port = htons(PORT);
         inet_pton(AF_INET, ADDR, &server_addr.sin_addr);
 
         bind(server_fd, (struct sockaddr *)&server_addr, sizeof(struct sockaddr));
@@ -70,9 +71,10 @@ int main(int argc, char **argv) {
 
         while (1) {
                 client_fd = accept(server_fd, NULL, NULL);
+                printf("accept successful\n");
                 if (fork() == 0) {
                         close(server_fd);
-                        sent_image(client_fd, cap);
+                        send_image(client_fd, cap);
                         exit(0);
                 }
                 close(client_fd);

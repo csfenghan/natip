@@ -1,0 +1,24 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/fenghan/project/server/server.cc
+arpa/inet.h
+-
+iostream
+-
+opencv2/opencv.hpp
+-
+string
+-
+sys/socket.h
+-
+unistd.h
+-
+vector
+-
+

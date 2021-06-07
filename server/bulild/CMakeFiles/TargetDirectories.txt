@@ -1,0 +1,3 @@
+/home/fenghan/project/server/bulild/CMakeFiles/rebuild_cache.dir
+/home/fenghan/project/server/bulild/CMakeFiles/server.dir
+/home/fenghan/project/server/bulild/CMakeFiles/edit_cache.dir
