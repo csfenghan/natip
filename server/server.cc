@@ -10,7 +10,7 @@ using namespace std;
 using namespace cv;
 
 #define ADDR "127.0.0.1"
-#define PORT 11111
+#define PORT 8888
 
 void send_image(int client_fd, VideoCapture &cap) {
         Mat image;
