@@ -10,7 +10,7 @@
 using namespace std;
 using namespace cv;
 
-#define ADDR "127.0.0.1"
+#define ADDR "192.168.0.100"
 #define PORT 8888
 
 void receive_videos(int client_fd, char *output) {
@@ -30,8 +30,8 @@ void receive_videos(int client_fd, char *output) {
                         for (int i = 0; i < len; i++) {
                                 recv(client_fd, recv_buf, 1, 0);
                                 data[i] = recv_buf[0];
+				printf("%d,%d\n",i,len);
                         }
-
                         image_decode = imdecode(data, CV_LOAD_IMAGE_COLOR);
                         if (image_decode.empty()) {
                                 cerr << "imdecode error" << endl;
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
         server_addr.sin_port = htons(PORT);
         inet_pton(AF_INET, ADDR, &server_addr.sin_addr);
         if (connect(client_fd, (struct sockaddr *)&server_addr, sizeof(struct sockaddr)) < 0) {
-                cerr << "connect failed" << endl;
+		perror("connect failed");
                 exit(0);
         }
 
