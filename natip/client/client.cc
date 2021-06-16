@@ -1,18 +1,18 @@
 #include <unix_api.h>
 
-const char server[] = "99809412876dcc63.natapp.cc";
-const char port[] = "13650";
+const char server[] = "1.117.67.108";
+const short port = 8888;
 
 int main(int argc, char **argv) {
         int sockfd;
-        struct addrinfo *res;
+        struct sockaddr_in addr;
 
-        Getaddrinfo(server, port, NULL, &res);
-        // do {
-        sockfd = Socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-        Connect(sockfd, res->ai_addr, res->ai_addrlen);
-        //} while ((res = res->ai_next) != NULL);
+        sockfd = Socket(AF_INET, SOCK_STREAM, 0);
 
-        freeaddrinfo(res);
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(port);
+        inet_pton(AF_INET, server, &addr.sin_addr);
+        Connect(sockfd, (SA *)&addr, sizeof(addr));
+
         exit(0);
 }
