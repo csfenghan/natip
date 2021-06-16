@@ -1,5 +1,11 @@
 #include <unix_api.h>
 
+void printAddr(struct sockaddr_in addr) {
+        printf("addr:%s , port:%d\n",
+               inet_ntop(addr.sin_family, &addr, NULL, sizeof(struct sockaddr_in)),
+               ntohs(addr.sin_port));
+}
+
 int main(int argc, char **argv) {
         int listenfd, connfd;
         pid_t child_pid;
@@ -20,10 +26,10 @@ int main(int argc, char **argv) {
                 client_len = sizeof(client_addr);
                 connfd = Accept(listenfd, (SA *)&client_addr, &client_len);
                 if ((child_pid = Fork()) == 0) {
-			Close(listenfd);
-
-			exit(0);
+                        Close(listenfd);
+                        printAddr(client_addr);
+                        exit(0);
                 }
-		Close(connfd);
+                Close(connfd);
         }
 }
