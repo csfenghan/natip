@@ -1,3 +1,6 @@
+#ifndef NATIP_CLIENT_HPP
+#define NATIP_CLIENT_HPP
+
 #include <string>
 
 // 内网穿透 客户端
@@ -14,4 +17,4 @@ class NatIpClient{
 		std::string server_port_;
 };
 
-
+#endif
