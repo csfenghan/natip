@@ -1,6 +1,7 @@
 CC=g++
-CC_FLAGS:=-g -lunix_lib -lpthread
-SRC_FILES:=server.cc
+CC_FLAGS:=-g -lunix_lib -lpthread -ljsoncpp
+SRC_FILES:=main.cc \
+	   ./natip_server.cc
 FINAL_OBJ=server
 
 all:$(FINAL_OBJ)
