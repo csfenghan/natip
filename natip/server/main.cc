@@ -7,5 +7,5 @@ int main(int argc,char **argv){
 		fprintf(stderr,"load config file error!\n");
 		return -1;
 	}
-	server.tcpAccept();
+	server.processConnect();
 }

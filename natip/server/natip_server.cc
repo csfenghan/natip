@@ -31,57 +31,38 @@ bool NatIpServer::loadConfig(std::string path) {
 	return true;
 }
 
-void NatIpServer::tcpAccept(){
+void NatIpServer::processConnect(){
+	int connfd;
 	pid_t pid;
-	int listenfd,client_fd;
-	struct sockaddr_storage client_addr;
 	socklen_t client_len;
+	struct sockaddr_storage client_addr;
 
-	if((listenfd=tcpListen())<0){
-		perror("get listenfd failed");
-		return;
-	}
+	listen_fd_=Open_listenfd(listen_port_.c_str());
 
-	// 等待连接，处理连接
 	while(true){
-		client_fd=Accept(listenfd,(SA *)&client_addr,&client_len);
+		connfd=Accept(listen_fd_,(SA *)&client_addr,&client_len);
 		if((pid=Fork())==0){
-			close(listenfd);
-			printf("child process\n");
+			printf("a new tcp connect\n");
+			close(listen_fd_);
+
+			echo(connfd);
+
+			printf("a tcp connect disconnect\n");
 			exit(0);
 		}
-		close(client_fd);
+		close(connfd);
+		child_pid_.push_back(pid);
 	}
 }
 
-int NatIpServer::tcpListen(){
-	struct  addrinfo hints,*listp,*p;
-	int listenfd;
+void NatIpServer::echo(int connfd){
+	size_t n;
+	char buf[MAXLINE];
+	rio_t rio;
 
-	// 1. 获取监听的服务器地址和端口
-	memset(&hints,0,sizeof(struct addrinfo));
-	hints.ai_socktype=SOCK_STREAM;
-	hints.ai_flags=AI_PASSIVE|AI_ADDRCONFIG;
-	Getaddrinfo(NULL,listen_port_.c_str(),&hints,&listp);
-
-	// 2. bind描述符
-	for(p=listp;p;p=listp->ai_next){
-		if((listenfd=socket(p->ai_family,p->ai_socktype,p->ai_protocol))<0)
-			continue;
-
-		if(bind(listenfd,p->ai_addr,p->ai_addrlen)==0)
-			break;
-		Close(listenfd);
+	Rio_readinitb(&rio,connfd);
+	while((n=Rio_readlineb(&rio,buf,MAXLINE))!=0){
+		printf("server received %d bytes\n",(int)n);
+		Rio_writen(connfd,buf,n);
 	}
-
-	// 3.listen描述符
-	freeaddrinfo(listp);
-	if(!p)
-		return -1;
-	if(listen(listenfd,10)<0){
-		Close(listenfd);
-		return -1;
-	}
-
-	return listenfd;
 }
