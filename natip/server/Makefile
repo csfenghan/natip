@@ -1,5 +1,5 @@
 CC=g++
-CC_FLAGS:=-g -lunix_lib -lpthread
+CC_FLAGS:=-g -lunix_lib -lpthread -ljsoncpp
 SRC_FILES:=server.cc
 FINAL_OBJ=server
 
