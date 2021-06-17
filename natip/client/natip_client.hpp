@@ -12,11 +12,7 @@ class NatIpClient{
 		// 根据配置文件连接服务器
 		void tcpInit();
 
-		// 发送string
-		void sendString(std::string data);
-
-		// 接收string
-		std::string receiveString();
+		void echo();
 	private:
 		int socket_fd_;
 

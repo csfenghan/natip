@@ -10,10 +10,5 @@ int main(int argc, char **argv) {
         client.loadConfig("config.json");
         client.tcpInit();
 
-        while (1) {
-                std::cout << "pleas input something:";
-                fflush(stdout);
-                std::cin >> data;
-		client.sendString(data);
-        }
+	client.echo();
 }

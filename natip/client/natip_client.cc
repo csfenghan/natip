@@ -40,16 +40,14 @@ void NatIpClient::tcpInit() {
         socket_fd_ = Open_clientfd(server_addr_.c_str(), server_port_.c_str());
 }
 
-void NatIpClient::sendString(std::string data) {
-        Rio_writen(socket_fd_, data.c_str(), data.size());
-}
-
-std::string NatIpClient::receiveString() {
+void NatIpClient::echo() {
+        rio_t rio;
         char buf[MAXLINE];
-        std::string result;
 
-        Rio_readn(socket_fd_, buf, MAXLINE);
-        result = std::string(buf);
-
-	return result;
+        Rio_readinitb(&rio, socket_fd_);
+        while (Fgets(buf, MAXLINE, stdin) != NULL) {
+                Rio_writen(socket_fd_, buf, strlen(buf));
+                Rio_readlineb(&rio, buf, MAXLINE);
+                Fputs(buf, stdout);
+        }
 }
