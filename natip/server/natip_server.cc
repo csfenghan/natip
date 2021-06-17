@@ -3,35 +3,38 @@
 #include <jsoncpp/json/json.h>
 #include <fstream>
 
-bool NatIpServer::loadConfig(std::string path) {
+void NatIpServer::init(){
+	// 1.设置信号处理函数
+	Signal(SIGCHLD,sigchldHandler);
+}
+
+void NatIpServer::loadConfig(std::string path) {
 	Json::Value root, server;
 	Json::Reader reader;
 	std::ifstream in_file_stream;
 
 	// 1.读取config文件
 	in_file_stream.open(path, std::ifstream::in);
-	if (!in_file_stream.is_open()){
-		fprintf(stderr,"can't open file: %s", path.c_str());
-	}
+	if (!in_file_stream.is_open())
+		err_quit("can't open file: %s", path.c_str());
+
 
 	if (!reader.parse(in_file_stream, root))
-		fprintf(stderr,"can't parse file: %s", path.c_str());
+		err_quit("can't parse file: %s", path.c_str());
 
 	// 2.使用config文件进行配置
 	if (!root.isMember("server"))
-		fprintf(stderr,"can't found key: 'server' in config file %s", path.c_str());
+		err_quit("can't found key: 'server' in config file %s", path.c_str());
 	server = root["server"];
 
 	if (!server.isMember("listen_port"))
-		fprintf(stderr,"can't found key: 'listen_port' in object 'server' in config file %s",
+		err_quit("can't found key: 'listen_port' in object 'server' in config file %s",
 				path.c_str());
 
 	listen_port_= server["listen_port"].asString();
-
-	return true;
 }
 
-void NatIpServer::processConnect(){
+void NatIpServer::tcpServer(){
 	int connfd;
 	pid_t pid;
 	socklen_t client_len;
@@ -51,7 +54,6 @@ void NatIpServer::processConnect(){
 			exit(0);
 		}
 		close(connfd);
-		child_pid_.push_back(pid);
 	}
 }
 
@@ -65,4 +67,8 @@ void NatIpServer::echo(int connfd){
 		printf("server received %d bytes\n",(int)n);
 		Rio_writen(connfd,buf,n);
 	}
+}
+
+void NatIpServer::sigchldHandler(int sig){
+	sio_puts((char *)"a child died\n");
 }

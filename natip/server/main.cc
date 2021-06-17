@@ -3,9 +3,12 @@
 int main(int argc,char **argv){
 	NatIpServer server;
 
-	if(!server.loadConfig("config.json")){
-		fprintf(stderr,"load config file error!\n");
-		return -1;
-	}
-	server.processConnect();
+	// 1. 初始化
+	server.init();
+
+	// 2.加载配置
+	server.loadConfig("config.json");
+
+	// 3.服务器主循环
+	server.tcpServer();
 }
