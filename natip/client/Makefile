@@ -1,5 +1,5 @@
 CC=g++
-CC_FLAGS:=-g -lunix_lib -lpthread
+CC_FLAGS:=-g -lunix_lib -lpthread -ljsoncpp -L /usr/lib/x86_64-linux-gnu/
 SRC_FILES:=client.cc
 FINAL_OBJ=client
 
