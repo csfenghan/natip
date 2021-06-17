@@ -36,29 +36,18 @@ bool NatIpClient::loadConfig(std::string path) {
         return true;
 }
 
-int NatIpClient::tcpConnect() {
-        int clientfd;
-        struct addrinfo hints, *listp, *p;
+void NatIpClient::tcpInit() {
+        socket_fd_ = Open_clientfd(server_addr_.c_str(), server_port_.c_str());
+}
 
-        // 1.域名、服务名解析
-        memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_socktype = SOCK_STREAM; //返回的套接字可以作为连接的端点使用
-        hints.ai_flags = AI_ADDRCONFIG;  //只有当主机被配置为IPv4时，才返回IPv4地址
-        Getaddrinfo(server_addr_.c_str(), server_port_.c_str(), &hints, &listp);
+void NatIpClient::echo() {
+        rio_t rio;
+        char buf[MAXLINE];
 
-        // 2.连接服务器
-        for (p = listp; p; p = p->ai_next) {
-                if ((clientfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0)
-                        continue;
-                if (connect(clientfd, p->ai_addr, p->ai_addrlen) != -1)
-                        break;
-                Close(clientfd);
+        Rio_readinitb(&rio, socket_fd_);
+        while (Fgets(buf, MAXLINE, stdin) != NULL) {
+                Rio_writen(socket_fd_, buf, strlen(buf));
+                Rio_readlineb(&rio, buf, MAXLINE);
+                Fputs(buf, stdout);
         }
-
-        // 3.结束
-        freeaddrinfo(listp);
-        if (!p) //连接失败
-                return -1;
-        else
-                return clientfd;
 }

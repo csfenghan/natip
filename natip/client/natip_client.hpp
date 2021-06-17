@@ -10,9 +10,12 @@ class NatIpClient{
 		bool loadConfig(std::string path="config.json");
 
 		// 根据配置文件连接服务器
-		int tcpConnect();
+		void tcpInit();
 
+		void echo();
 	private:
+		int socket_fd_;
+
 		std::string server_addr_;
 		std::string server_port_;
 };
