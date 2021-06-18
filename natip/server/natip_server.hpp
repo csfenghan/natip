@@ -17,7 +17,7 @@ class NatIpServer{
 	 **************************************/
 	public:
 	// 初始化
-	void init();
+	void tcpInit();
 
 	// 加载配置文件
 	void loadConfig(std::string path="config.json");
