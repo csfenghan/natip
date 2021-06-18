@@ -1,7 +1,7 @@
 CC=g++
 CC_FLAGS:=-g -ljsoncpp -DJSONCPP
 SRC_FILES:=main.cc \
-	./mini_protocol.cc
+	./jdt.cc
 FINAL_OBJ=demo
 
 all:$(FINAL_OBJ)

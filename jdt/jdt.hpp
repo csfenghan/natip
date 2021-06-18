@@ -1,5 +1,5 @@
 /************************************************************
- * 在我的Jetson nano,Dell,Tencent间用于通信的协议(Jtd)
+ * 在我的Jetson nano,Dell,Tencent间用于通信的协议(Jdt)
  ************************************************************/
 #ifndef NTP_HPP
 #define NTP_HPP
@@ -8,14 +8,17 @@
 #include <iostream>
 #include <utility>
 
-// 是否支持以下接口
+// 是否支持jsoncpp库
 #ifdef JSONCPP
 #include "jsoncpp/json/json.h"
 #endif
 
+// 是否支持opencv库
 #ifdef OPENCV
 //#include "opencv2/opencv.hpp"
 #endif
+
+namespace jdt {
 
 /***************************************
  *	一、 消息体参数
@@ -25,11 +28,11 @@
 #define SERVICE_IMAGE 2 //传输的是image文件(需要支持opencv库)
 
 // 2. 其他参数
-#define JTD_MAGIC 9999  // 魔数
-#define JTD_HEAD_SIZE 8 // 头部大小8字节
+#define MAGIC 9999  // 魔数
+#define HEAD_SIZE 8 // 头部大小8字节
 
 // 3.协议头
-struct JdtHead {
+struct Head {
         uint16_t magic;    // 魔数
         uint8_t version;   // 版本号
         uint8_t service;   // 请求的服务
@@ -38,11 +41,10 @@ struct JdtHead {
 
 // 4.消息体（支持多种数据类型）
 
-
 /***************************************
- *	二、JdtEncode
+ *	二、Encode
  **************************************/
-class JdtEncode {
+class Encode {
       public:
         // (1)jsoncpp文件传输（需要有jsoncpp库）
 #ifdef JSONCPP
@@ -59,15 +61,15 @@ class JdtEncode {
 };
 
 /***************************************
- *	三、JdtDecode
+ *	三、Decode
  **************************************/
-class JdtDecode {
+class Decode {
         enum ParserStatus {
                 PARSEING_INIT = 1, // 协议初始化
                 PARSEING_HEAD = 2, // 正在解析头部
                 PARSEING_BODY = 3, // 正在解析数据
         };
-	
+
       public:
         void init();
         bool parse(uint8_t *data, uint32_t len);
@@ -78,4 +80,5 @@ class JdtDecode {
         bool parseHead(uint8_t *data, uint32_t len);
 };
 
+} // namespace jdt
 #endif
