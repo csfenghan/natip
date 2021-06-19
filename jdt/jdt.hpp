@@ -32,9 +32,10 @@ namespace jdt {
 #define SERVICE_REQ 2  //申请接收
 
 // (3) 数据的类型
-#define TYPE_JSON 1   // json数据
-#define TYPE_IMAGE 2  // image数据
-#define TYPE_STRING 3 // string数据
+#define TYPE_UNDEFINE 0 // 未定义类型
+#define TYPE_JSON 1     // json数据
+#define TYPE_IMAGE 2    // image数据
+#define TYPE_STRING 3   // string数据
 
 // (3)协议头数据格式(实际上用不到，只是规范数据的格式，数据分别以magic、version、service、data_len顺序存放)
 struct MsgHead {
@@ -47,19 +48,37 @@ struct MsgHead {
 // 2.消息体（支持多种数据类型）
 class MsgBaseBody {
       public:
-        MsgBaseBody(int type) : type_(type) {}
+        MsgBaseBody() : type_(TYPE_UNDEFINE), valid(false) {}
         virtual ~MsgBaseBody() {}
 
-        inline int getType() { return type_; }
+        // 获取数据类型
+        int getType() { return type_; }
+
+        // 设置数据类型
+        void setType(int type) { type_ = type; }
+
+        // 数据是否有效
+        bool isValid() { return valid; }
+
+        // 设置数据是否有效
+        void setValid(bool is_valid) { valid = is_valid; }
 
       private:
-        int type_;
+        int type_;  // 数据的类型
+        bool valid; // 数据是否有效（可能发生损坏、丢失等导致）
 };
 template <typename T> class MsgBody : public MsgBaseBody {
       public:
-        MsgBody(const int &type) : MsgBaseBody(type) {}
-        MsgBody(const T &data, const int &type) : MsgBaseBody(type), data_(data) {}
+        MsgBody() : MsgBaseBody() {} // 初始化时必须指定类型
+        MsgBody(const T &data, int type, bool is_valid) : data_(data) {
+                setType(type);
+                setValid(is_valid);
+        }
 
+        // 获取数据
+        T getData() { return data_; }
+
+        // 设置数据
         void setData(const T &data) { data_ = data; }
 
       private:
@@ -140,6 +159,15 @@ class Decode {
         // 	并清空curr_head_和data_parsing_中已经解析的部分,如果解析失败，则什么也不做
         // 返回：如果解析失败，则返回false；否则返回true
         bool parseBody();
+
+        // 解析jsoncpp数据(需要jsoncpp支持)
+        MsgBaseBody parseJson();
+
+        // 解析image(OpenCV)数据(需要opencv支持)
+        MsgBaseBody parseImage();
+
+        // 解析string数据
+        MsgBaseBody parseString();
 };
 
 } // namespace jdt

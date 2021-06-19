@@ -148,37 +148,89 @@ bool Decode::parseBody() {
         if (data_parsing_.size() < curr_head_.len)
                 return false;
 
-        uint8_t *ptr;
+        bool is_error;
+        MsgBaseBody msg;
 
-        ptr = &data_parsing_[0];
-        ptr += HEAD_SIZE;
-
-        // 根据消息的type类型来选择对应的数据结构
+        is_error = false;
+        // 根据消息的type类型来选择对应的数据结构，并判断是否支持这种数据类型
         switch (curr_head_.type) {
+
+        // json类型数据，需要jsoncpp库支持
         case TYPE_JSON:
-#ifndef JSONCPP
-                fprintf(stderr, "can't recognize the type JSONCPP,you need jsoncpp library\n");
-		break;
-#endif
-
+#ifdef JSONCPP
+                msg = parseJson();
                 break;
+#endif
+                fprintf(stderr,
+                        "can't recognize the type JSONCPP,you need jsoncpp library\n");
+                is_error = true;
+                break;
+
+        // image类型数据，需要opencv库支持
         case TYPE_IMAGE:
-#ifndef OPENCV
-                fprintf(stderr, "can't recognize the type IMAGE,you need OpenCV library\n");
-		break;
-#endif
+#ifdef OPENCV
+                msg = parseImage();
                 break;
-        case TYPE_STRING:
+#endif
+                fprintf(stderr,
+                        "can't recognize the type IMAGE,you need OpenCV library\n");
+                is_error = true;
+                break;
 
+                // string类型数据
+        case TYPE_STRING:
+                msg = parseString();
                 break;
         default:
                 break;
         }
 
+        // 如果正确，加入data_parsed_中
+        if (msg.isValid()) {
+                data_parsed_.push_back(msg);
+        } else {
+                is_error = true;
+        }
+
         // 清除data_parsing_中已经解析或无效的部分的部分，清空curr_head_;
-        data_parsing_.erase(data_parsing_.begin(), data_parsing_.begin() + curr_head_.len);
+        data_parsing_.erase(data_parsing_.begin(),
+                            data_parsing_.begin() + curr_head_.len);
         memset(&curr_head_, 0, sizeof(curr_head_));
 
-        return true;
+        if (is_error)
+                return false;
+        else
+                return true;
 }
+// 解析jsoncpp数据
+#ifdef JSONCPP
+MsgBaseBody Decode::parseJson() {}
+#endif
+
+// 解析image(OpenCV)数据
+#ifdef OPENCV
+MsgBaseBody Decode::parseImage() {}
+#endif
+
+// 功能：解析string数据
+// 描述：以string的格式解析存放在data_parsing_中的数据，解析后的数据存放在data_parsed_中
+// 返回：解析成功返回true，否则返回false
+MsgBaseBody Decode::parseString() {
+        MsgBody<std::string> msg; // 设置msg类型为TYPE_STRING
+
+        // parse()函数应该检查这种情况，不应该发生这种行为
+        if (data_parsing_.size() < curr_head_.len) {
+                msg.setValid(false);
+                msg.setType(TYPE_UNDEFINE);
+                return msg;
+        }
+
+        msg.setData(std::string(data_parsing_.begin() + HEAD_SIZE,
+                                data_parsing_.begin() + curr_head_.len));
+        msg.setValid(true);
+        msg.setType(TYPE_STRING);
+
+        return msg;
+}
+
 } // namespace jdt
