@@ -105,8 +105,24 @@ class Decode {
         // 初始化解析器状态
         void init();
 
-        // 解析接收到的字节流
+        // 功能：解析收到的数据流
+        // 描述：解析以data开头，长度为len的字节流。解析后的数据保存在data_parsed_中，可以通过front()获取
+        // 返回：如果长度len的字节流被全部解析，则返回true，否则返回false
         bool parse(uint8_t *data, uint32_t len);
+
+        // 获取消息
+        MsgBaseBody front();
+        MsgBaseBody back();
+
+        // 查看是否为空
+        bool empty();
+
+        // 释放一个消息
+        void pop_front();
+        void pop_back();
+
+        // 查看当前的消息长度
+        size_t size();
 
       private:
         MsgHead curr_head_;                   // 正在解析的消息的消息头
@@ -114,9 +130,16 @@ class Decode {
         std::deque<MsgBaseBody> data_parsed_; // 已经解析完的数据
         ParserStatus status_;                 // 当前的解析状态
 
-        // 解析协议头
-	// 如果解析失败，则返回false；否则返回true
-        bool parseHead(uint8_t *data,uint32_t len);
+        // 功能：解析协议头
+        // 描述：解析保存在data_parsing_中的数据，如果解析成功，则设置curr_head_中的参数，否则什么也不做
+        // 描述：如果解析失败，则返回false；否则返回true
+        bool parseHead();
+
+        // 功能：解析协议体
+        // 描述：解析保存在data_parsing_中的数据，如果解析成功，则将解析出的消息加入data_parsed_中，
+        // 	并清空curr_head_和data_parsing_中已经解析的部分,如果解析失败，则什么也不做
+        // 返回：如果解析失败，则返回false；否则返回true
+        bool parseBody();
 };
 
 } // namespace jdt
