@@ -28,15 +28,13 @@ std::pair<uint8_t *, uint32_t> Encode::encode(const Json::Value &data) {
 
         // 2.设置头部字段（为了防止大小端不同，需要进行网络字节序转换）
         ptr = result.first;
-
-        *(uint16_t *)ptr = htons(MAGIC);
+        *(uint8_t *)ptr = SERVICE_SEND;
+        ptr += 1;
+        *(uint8_t *)ptr = TYPE_JSON;
+        ptr += 1;
+        *(uint16_t *)ptr = 0;
         ptr += 2;
-        *(uint8_t *)ptr = 1;
-        ptr += 1;
-        *(uint8_t *)ptr = SERVICE_JSON;
-        ptr += 1;
         *(uint32_t *)ptr = htonl(len);
-        ptr += 4;
 
         // 3.放置data数据
         memcpy(ptr, body.data(), body.size());
@@ -45,9 +43,7 @@ std::pair<uint8_t *, uint32_t> Encode::encode(const Json::Value &data) {
 }
 #endif
 
-void Encode::release(const std::pair<uint8_t *, uint32_t> &data) {
-        delete data.first;
-}
+void Encode::release(const std::pair<uint8_t *, uint32_t> &data) { delete data.first; }
 
 /***************************************
  *	二、JdtDecode实现

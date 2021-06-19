@@ -23,23 +23,40 @@ namespace jdt {
 /***************************************
  *	一、 消息体参数
  **************************************/
-// 1.支持的服务类型
-#define SERVICE_JSON 1  //传输的是json文件(需要支持jsoncpp库)
-#define SERVICE_IMAGE 2 //传输的是image文件(需要支持opencv库)
-
-// 2. 其他参数
-#define MAGIC 9999  // 魔数
+// 1.协议头以及其用到的参数
+// (1) 魔数、版本号、头部大小
 #define HEAD_SIZE 8 // 头部大小8字节
 
-// 3.协议头
-struct Head {
-        uint16_t magic;    // 魔数
-        uint8_t version;   // 版本号
-        uint8_t service;   // 请求的服务
-        uint32_t data_len; // 数据段的长度
+// (2) 服务的类型
+#define SERVICE_SEND 1 //发送
+#define SERVICE_REQ 2  //申请接收
+
+// (3) 数据的类型
+#define TYPE_JSON 1  // json数据
+#define TYPE_IMAGE 2 // image数据
+
+// (3)协议头数据格式(实际上用不到，只是规范数据的格式，数据分别以magic、version、service、data_len顺序存放)
+struct MsgHead {
+        uint8_t service; // 服务的类型(1字节)
+        uint8_t type;    // 数据的类型(1字节)
+        uint16_t crc;    // 校验码
+        uint32_t len;    // 数据段的长度(4字节)
 };
 
-// 4.消息体（支持多种数据类型）
+// 2.消息体（支持多种数据类型）
+class MsgBaseBody {
+      public:
+        ~MsgBaseBody() {}
+};
+template <typename T> class MsgBody : public MsgBaseBody {
+      public:
+        MsgBody() {}
+        MsgBody(const T &data, int type) : data_(data), type_(type) {}
+
+      private:
+        T data_;
+        int type_;
+};
 
 /***************************************
  *	二、Encode
