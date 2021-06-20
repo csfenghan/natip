@@ -93,13 +93,13 @@ bool Decode::empty() { return data_parsed_.empty(); }
 size_t Decode::size() { return data_parsed_.size(); }
 
 // 判断消息的格式
-bool Decode::isString() {
+bool Decode::nextIsString() {
         if (empty())
                 return false;
         return data_parsed_.front()->getType() == TYPE_STRING;
 }
 
-bool Decode::isJson() {
+bool Decode::nextIsJson() {
         if (empty())
                 return false;
         return data_parsed_.front()->getType() == TYPE_JSON;
@@ -225,7 +225,7 @@ bool Decode::parseBody() {
 }
 // 解析jsoncpp数据
 #ifdef JSONCPP
-// std::shared_ptr<Value> Decode::parseJson() {}
+std::shared_ptr<Value> Decode::parseJson() {}
 #endif
 
 // 解析image(OpenCV)数据

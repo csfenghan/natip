@@ -125,8 +125,7 @@ class Decode {
         };
 
       public:
-        // 初始化解析器状态
-        void init();
+        Decode() { init(); }
 
         // 功能：解析收到的数据流
         // 描述：解析以data开头，长度为len的字节流。解析后的数据保存在data_parsed_中
@@ -134,16 +133,16 @@ class Decode {
         bool parse(uint8_t *data, uint32_t len);
 
         // 判断要取出的消息的类型
-        bool isString();
-        bool isJson();
-        bool isImage();
+        bool nextIsString();
+        bool nextIsJson();
+        bool nextIsImage();
 
         // 按照对应的类型获取消息
         std::string getString();
-	std::string popString();
+        std::string popString();
 #ifdef JSONCPP
         Json::Value getJson();
-	Json::Value popJson();
+        Json::Value popJson();
 #endif
 #ifdef OPENCV
 
@@ -153,7 +152,7 @@ class Decode {
         bool empty();
 
         // 释放一个消息
-	void pop();
+        void pop();
 
         // 查看当前的消息长度
         size_t size();
@@ -163,6 +162,9 @@ class Decode {
         std::deque<uint8_t> data_parsing_; // 当前正在解析的字节流
         std::queue<std::shared_ptr<Value>> data_parsed_; // 已结解析完的数据
         ParserStatus status_;                            // 当前的解析状态
+
+        // 初始化解析器状态
+        void init();
 
         // 功能：解析协议头
         // 描述：解析保存在data_parsing_中的数据，如果解析成功，则设置curr_head_中的参数，否则什么也不做

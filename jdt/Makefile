@@ -1,5 +1,5 @@
 CC=g++
-CC_FLAGS:=-g -ljsoncpp -DJSONCPP
+CC_FLAGS:=-g -ljsoncpp -DJSONCPP 
 SRC_FILES:=main.cc \
 	./jdt.cc
 FINAL_OBJ=demo

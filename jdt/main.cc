@@ -6,18 +6,16 @@
 int main() {
         jdt::Encode encode;
         jdt::Decode decode;
-        std::string test("it's a test\n");
-        jdt::MsgBaseBody msg;
+        std::string test("it's a test");
 
         auto data = encode.encode(test);
-        if (decode.parse(data.first, data.second)) {
-                msg = decode.front();
-                if (msg.isValid()) {
-                        if (msg.getType() == TYPE_STRING) {
-				 
-                        }
-                }
-        } else {
-                std::cerr << "parse failed\n";
+        if (!decode.parse(data.first, data.second)) {
+                std::cerr << "parse failed";
+                return 0;
+        }
+
+        if (!decode.empty()) {
+                if (decode.nextIsString())
+                        std::cout << decode.getString() << std::endl;
         }
 }
