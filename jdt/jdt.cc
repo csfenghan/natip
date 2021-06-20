@@ -8,9 +8,18 @@
 namespace jdt {
 
 /***************************************
- *	一、JdtEncode实现
+ *	MsgBody实现
  **************************************/
-// 编码string数据
+
+	std::string MsgBody::asString(){
+		
+	}
+
+/***************************************
+ *	JdtEncode实现
+ **************************************/
+// 功能：编码string数据
+// 返回：返回一个pair结构，first参数是编码后数据的首地址，second是数据的长度
 std::pair<uint8_t *, uint32_t> Encode::encode(const std::string &data) {
         std::pair<uint8_t *, uint32_t> result;
         uint32_t len;
@@ -72,15 +81,15 @@ void Encode::encodeHead(uint8_t *ptr, int service, int type, int len) {
 }
 
 /***************************************
- *	二、JdtDecode实现
+ *	JdtDecode实现
  **************************************/
 
 // 初始化解析状态
 void Decode::init() { status_ = PARSING_INIT; }
 
 // 获取消息
-MsgBaseBody Decode::front() { return data_parsed_.front(); }
-MsgBaseBody Decode::back() { return data_parsed_.back(); }
+Value Decode::getFrontData() { return *data_parsed_.front(); }
+Value Decode::getBackData() { return *data_parsed_.back(); }
 
 // 查看是否为空
 bool Decode::empty() { return data_parsed_.empty(); }
@@ -93,7 +102,7 @@ void Decode::pop_back() { data_parsed_.pop_back(); }
 size_t Decode::size() { return data_parsed_.size(); }
 
 // 功能：解析收到的数据流
-// 描述：解析以data开头，长度为len的字节流。解析后的数据保存在data_parsed_中，可以通过front()获取
+// 描述：解析以data开头，长度为len的字节流。解析后的数据保存在data_parsed_中
 // 返回：如果长度len的字节流被全部解析，则返回true，否则返回false
 bool Decode::parse(uint8_t *data, uint32_t len) {
         // 保存数据
@@ -149,7 +158,7 @@ bool Decode::parseBody() {
                 return false;
 
         bool is_error;
-        MsgBaseBody msg;
+        std::shared_ptr<Value> msg;
 
         is_error = false;
         // 根据消息的type类型来选择对应的数据结构，并判断是否支持这种数据类型
@@ -186,7 +195,7 @@ bool Decode::parseBody() {
         }
 
         // 如果正确，加入data_parsed_中
-        if (msg.isValid()) {
+        if (msg->isValid()) {
                 data_parsed_.push_back(msg);
         } else {
                 is_error = true;
@@ -204,31 +213,31 @@ bool Decode::parseBody() {
 }
 // 解析jsoncpp数据
 #ifdef JSONCPP
-MsgBaseBody Decode::parseJson() {}
+// std::shared_ptr<Value> Decode::parseJson() {}
 #endif
 
 // 解析image(OpenCV)数据
 #ifdef OPENCV
-MsgBaseBody Decode::parseImage() {}
+// std::shared_ptr<Value> Decode::parseImage() {}
 #endif
 
 // 功能：解析string数据
-// 描述：以string的格式解析存放在data_parsing_中的数据，解析后的数据存放在data_parsed_中
-// 返回：解析成功返回true，否则返回false
-MsgBaseBody Decode::parseString() {
-        MsgBody<std::string> msg; // 设置msg类型为TYPE_STRING
+// 描述：以string的格式解析存放在data_parsing_中的数据，并设置数据的类型和其有效性
+// 返回：返回指向解析的数据的智能指针
+std::shared_ptr<Value> Decode::parseString() {
+        auto msg = std::make_shared<ExtendMsgBody<std::string>>();
 
         // parse()函数应该检查这种情况，不应该发生这种行为
         if (data_parsing_.size() < curr_head_.len) {
-                msg.setValid(false);
-                msg.setType(TYPE_UNDEFINE);
+                msg->setValid(false);
+                msg->setType(TYPE_UNDEFINE);
                 return msg;
         }
 
-        msg.setData(std::string(data_parsing_.begin() + HEAD_SIZE,
-                                data_parsing_.begin() + curr_head_.len));
-        msg.setValid(true);
-        msg.setType(TYPE_STRING);
+        msg->setData(std::string(data_parsing_.begin() + HEAD_SIZE,
+                                 data_parsing_.begin() + curr_head_.len));
+        msg->setValid(true);
+        msg->setType(TYPE_STRING);
 
         return msg;
 }

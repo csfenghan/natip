@@ -6,8 +6,8 @@
 
 #include <deque>
 #include <iostream>
-#include <utility>
 #include <memory>
+#include <utility>
 
 // 是否支持jsoncpp库
 #ifdef JSONCPP
@@ -47,40 +47,48 @@ struct MsgHead {
 };
 
 // 2.消息体（支持多种数据类型）
-class MsgBaseBody {
+// 消息的基本类型，提供获取数据类型、提供数据等只读接口
+class MsgBody {
       public:
-        MsgBaseBody() : type_(TYPE_UNDEFINE), valid(false) {}
-        ~MsgBaseBody() {}
+        MsgBody() : type_(TYPE_UNDEFINE), valid_(false) {}
+        ~MsgBody() {}
 
         // 获取数据类型
         int getType() { return type_; }
 
-        // 设置数据类型
-        void setType(int type) { type_ = type; }
-
         // 数据是否有效
-        bool isValid() { return valid; }
+        bool isValid() { return valid_; }
 
-        // 设置数据是否有效
-        void setValid(bool is_valid) { valid = is_valid; }
+#ifdef JSONCPP
+        // 将数据以json的格式返回，需要jsoncpp库支持
+        Json::Value asJson();
+#endif
+#ifdef OPENCV
+        // cv::Mat asImage();
+#endif
+        // 将数据以string的形式返回
+        std::string asString();
 
-      private:
-        int type_;  // 数据的类型
-        bool valid; // 数据是否有效（可能发生损坏、丢失等导致）
+      protected:
+        int type_;   // 数据的类型
+        bool valid_; // 数据是否有效（可能发生损坏、丢失等导致）
 };
-template <typename T> class MsgBody : public MsgBaseBody {
-      public:
-        MsgBody() : MsgBaseBody() {} // 初始化时必须指定类型
-        MsgBody(const T &data, int type, bool is_valid) : data_(data) {
-                setType(type);
-                setValid(is_valid);
-        }
+using Value = MsgBody;
 
-        // 获取数据
-        T getData() { return data_; }
+// 存放不同类型数据的类，负责写入数据的具体内容及其有效性
+template <typename T> class ExtendMsgBody : public MsgBody {
+      public:
+        ExtendMsgBody() : MsgBody() {} // 初始化时必须指定类型
+        ExtendMsgBody(const T &data, int type, bool is_valid) : data_(data) {}
 
         // 设置数据
         void setData(const T &data) { data_ = data; }
+
+        // 设置type
+        void setType(int type) { type_ = type; }
+
+        // 设置有效性
+        void setValid(bool is_valid) { valid_ = is_valid; }
 
       private:
         T data_;
@@ -91,7 +99,8 @@ template <typename T> class MsgBody : public MsgBaseBody {
  **************************************/
 class Encode {
       public:
-        // 传输string字符串
+        // 功能：编码string数据
+        // 返回：返回一个pair结构，first参数是编码后数据的首地址，second是数据的长度
         std::pair<uint8_t *, uint32_t> encode(const std::string &data);
 
         // jsoncpp文件传输（需要有jsoncpp库）
@@ -126,13 +135,13 @@ class Decode {
         void init();
 
         // 功能：解析收到的数据流
-        // 描述：解析以data开头，长度为len的字节流。解析后的数据保存在data_parsed_中，可以通过front()获取
+        // 描述：解析以data开头，长度为len的字节流。解析后的数据保存在data_parsed_中
         // 返回：如果长度len的字节流被全部解析，则返回true，否则返回false
         bool parse(uint8_t *data, uint32_t len);
 
         // 获取消息
-        MsgBaseBody front();
-        MsgBaseBody back();
+        Value getFrontData();
+        Value getBackData();
 
         // 查看是否为空
         bool empty();
@@ -145,10 +154,10 @@ class Decode {
         size_t size();
 
       private:
-        MsgHead curr_head_;                   // 正在解析的消息的消息头
-        std::deque<uint8_t> data_parsing_;    // 当前正在解析的字节流
-        std::deque<MsgBaseBody> data_parsed_; // 已经解析完的数据
-        ParserStatus status_;                 // 当前的解析状态
+        MsgHead curr_head_;                // 正在解析的消息的消息头
+        std::deque<uint8_t> data_parsing_; // 当前正在解析的字节流
+        std::deque<std::shared_ptr<Value>> data_parsed_; // 已结解析完的数据
+        ParserStatus status_;                            // 当前的解析状态
 
         // 功能：解析协议头
         // 描述：解析保存在data_parsing_中的数据，如果解析成功，则设置curr_head_中的参数，否则什么也不做
@@ -162,13 +171,15 @@ class Decode {
         bool parseBody();
 
         // 解析jsoncpp数据(需要jsoncpp支持)
-        MsgBaseBody parseJson();
+        std::shared_ptr<Value> parseJson();
 
         // 解析image(OpenCV)数据(需要opencv支持)
-        MsgBaseBody parseImage();
+        std::shared_ptr<Value> parseImage();
 
-        // 解析string数据
-        MsgBaseBody parseString();
+        // 功能：解析string数据
+        // 描述：以string的格式解析存放在data_parsing_中的数据，并设置数据的类型和其有效性
+        // 返回：返回指向解析的数据的智能指针
+        std::shared_ptr<Value> parseString();
 };
 
 } // namespace jdt
