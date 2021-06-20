@@ -5,15 +5,19 @@
 
 int main() {
         jdt::Encode encode;
-        Json::Value root;
-        Json::Reader reader;
-        std::ifstream ifs("info.json");
+        jdt::Decode decode;
+        std::string test("it's a test\n");
+        jdt::MsgBaseBody msg;
 
-        if (!reader.parse(ifs, root)) {
-                fprintf(stderr, "parser failed\n");
-                return 0;
+        auto data = encode.encode(test);
+        if (decode.parse(data.first, data.second)) {
+                msg = decode.front();
+                if (msg.isValid()) {
+                        if (msg.getType() == TYPE_STRING) {
+				 
+                        }
+                }
+        } else {
+                std::cerr << "parse failed\n";
         }
-        auto result = encode.encode(root);
-
-        std::cout << result.second << std::endl;
 }

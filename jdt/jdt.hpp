@@ -7,6 +7,7 @@
 #include <deque>
 #include <iostream>
 #include <utility>
+#include <memory>
 
 // 是否支持jsoncpp库
 #ifdef JSONCPP
@@ -49,7 +50,7 @@ struct MsgHead {
 class MsgBaseBody {
       public:
         MsgBaseBody() : type_(TYPE_UNDEFINE), valid(false) {}
-        virtual ~MsgBaseBody() {}
+        ~MsgBaseBody() {}
 
         // 获取数据类型
         int getType() { return type_; }
