@@ -121,6 +121,22 @@ std::string Decode::popString() {
         return result;
 }
 
+#ifdef JSONCPP
+Json::Value Decode::getJson() {
+        ExtendMsgBody<Json::Value> *ptr;
+
+        ptr = (ExtendMsgBody<Json::Value> *)data_parsed_.front().get();
+        return ptr->getData();
+}
+
+Json::Value Decode::popJson() {
+        auto result = getJson();
+        pop();
+        return result;
+}
+
+#endif
+
 // 功能：解析收到的数据流
 // 描述：解析以data开头，长度为len的字节流。解析后的数据保存在data_parsed_中
 // 返回：如果长度len的字节流被全部解析，则返回true，否则返回false
@@ -234,9 +250,22 @@ bool Decode::parseBody() {
 // 解析jsoncpp数据
 #ifdef JSONCPP
 std::shared_ptr<MsgBody> Decode::parseJson() {
-	auto msg = std::make_shared<ExtendMsgBody<Json::Value>>();
+        auto msg = std::make_shared<ExtendMsgBody<Json::Value>>();
+        Json::Reader reader;
+        Json::Value value;
+        char *ptr;
 
-	return msg;
+        ptr = (char *)&data_parsing_[0];
+        msg->setType(TYPE_JSON);
+
+        if (!reader.parse(ptr + HEAD_SIZE, ptr + curr_head_.len, value, false)) {
+                msg->setValid(false);
+                return msg;
+        }
+        msg->setData(value);
+        msg->setValid(true);
+
+        return msg;
 }
 #endif
 

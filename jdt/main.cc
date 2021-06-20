@@ -4,26 +4,32 @@
 #include <iostream>
 
 int main() {
+        Json::Reader reader;
+        Json::Value root;
+        Json::StyledWriter swriter;
         jdt::Encode encode;
         jdt::Decode decode;
-        std::string test1("it's a test,");
-        std::string test2("maybe it's not correct,");
-        std::string test3("test test...");
+        std::ifstream ifs;
+        std::ofstream ofs;
 
-        uint8_t buf[1024];
+        ifs.open("info.json", std::fstream::in);
+        if (!reader.parse(ifs, root)) {
+                std::cerr << "parse json failed" << std::endl;
+                return -1;
+        }
 
-        auto data1 = encode.encode(test1);
-        auto data2 = encode.encode(test2);
-        auto data3 = encode.encode(test3);
+        auto data_encoded = encode.encode(root);
 
-        decode.parse(data1.first, data1.second - 10);
-        //decode.parse(data1.first + data1.second - 10, 10);
-        // decode.parse(data2.first, data2.second);
-        // decode.parse(data3.first, data3.second);
-
-        while (!decode.empty()) {
-                std::cout << decode.popString() << std::endl;
-                //std::cout << decode.popString() << std::endl;
-                //std::cout << decode.popString() << std::endl;
+        decode.parse(data_encoded.first, data_encoded.second);
+        if (decode.empty()) {
+                std::cerr << "decode parse failed" << std::endl;
+                return -1;
+        }
+        Json::Value data_decoded = decode.popJson();
+        ofs.open("output.json");
+        ofs << swriter.write(data_decoded);
+        ofs.close();
+        if (decode.empty()) {
+                std::cout << "parse normal" << std :: endl;
         }
 }
