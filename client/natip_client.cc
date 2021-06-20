@@ -1,9 +1,9 @@
+#include "jdt.hpp"
+#include "jsoncpp/json/json.h"
 #include "natip_client.hpp"
+#include "unix_api.h"
 #include <fstream>
 #include <iostream>
-
-#include <jsoncpp/json/json.h>
-#include <unix_api.h>
 
 bool NatIpClient::loadConfig(std::string path) {
         Json::Value root, server;
@@ -40,14 +40,34 @@ void NatIpClient::tcpInit() {
         socket_fd_ = Open_clientfd(server_addr_.c_str(), server_port_.c_str());
 }
 
-void NatIpClient::echo() {
-        rio_t rio;
-        char buf[MAXLINE];
+void NatIpClient::tcpClient() {
+        jdt::Encode encode;
+        Json::Reader reader;
+        Json::Value root;
+        std::ifstream ifs;
 
-        Rio_readinitb(&rio, socket_fd_);
-        while (Fgets(buf, MAXLINE, stdin) != NULL) {
-                Rio_writen(socket_fd_, buf, strlen(buf));
-                Rio_readlineb(&rio, buf, MAXLINE);
-                Fputs(buf, stdout);
-        }
+        ifs.open("info.json", std::ifstream::in);
+        if (!ifs.is_open())
+                err_ret("can't open info.json");
+        if (!reader.parse(ifs, root, true))
+                err_ret("can't parse info.json");
+
+        auto data_encode = encode.encode(root);
+        Rio_writen(socket_fd_, data_encode.first, data_encode.second);
+}
+
+void NatIpClient::echo() {
+        jdt::Encode encode;
+        Json::Reader reader;
+        Json::Value root;
+        std::ifstream ifs;
+
+        ifs.open("info.json", std::ifstream::in);
+        if (!ifs.is_open())
+                err_ret("can't open info.json");
+        if (!reader.parse(ifs, root, true))
+                err_ret("can't parse info.json");
+
+        auto data_encode = encode.encode(root);
+        Rio_writen(socket_fd_, data_encode.first, data_encode.second);
 }

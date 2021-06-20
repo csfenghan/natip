@@ -12,6 +12,9 @@ class NatIpClient{
 		// 根据配置文件连接服务器
 		void tcpInit();
 
+		// 客户端
+		void tcpClient();
+
 		void echo();
 	private:
 		int socket_fd_;

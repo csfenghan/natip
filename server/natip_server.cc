@@ -1,7 +1,8 @@
+#include "jdt.hpp"
+#include "jsoncpp/json/json.h"
 #include "natip_server.hpp"
 #include "unix_api.h"
 #include <fstream>
-#include <jsoncpp/json/json.h>
 
 // 初始化函数
 void NatIpServer::tcpInit() {
@@ -29,8 +30,9 @@ void NatIpServer::loadConfig(std::string path) {
         server = root["server"];
 
         if (!server.isMember("listen_port"))
-                err_quit("can't found key: 'listen_port' in object 'server' in config file %s",
-                         path.c_str());
+                err_quit(
+                    "can't found key: 'listen_port' in object 'server' in config file %s",
+                    path.c_str());
 
         listen_port_ = server["listen_port"].asString();
 }
@@ -73,13 +75,16 @@ void NatIpServer::tcpServer() {
 void NatIpServer::echo(int connfd) {
         size_t n;
         char buf[MAXLINE];
-        rio_t rio;
+        Json::Value root;
+        Json::StyledWriter swriter;
+        jdt::Decode decode;
+        std::ofstream ofs;
 
-        Rio_readinitb(&rio, connfd);
-        while ((n = Rio_readlineb(&rio, buf, MAXLINE)) != 0) {
-                printf("server received %d bytes\n", (int)n);
-                Rio_writen(connfd, buf, n);
+        while ((n = Rio_readn(connfd, buf, MAXLINE)) != 0) {
+                decode.parse((uint8_t *)buf, n);
         }
+        ofs.open("client1.json");
+        ofs << swriter.write(decode.popJson());
 }
 
 // chld信号处理函数

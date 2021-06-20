@@ -10,5 +10,5 @@ int main(int argc, char **argv) {
         client.loadConfig("config.json");
         client.tcpInit();
 
-	client.echo();
+	client.tcpClient();
 }

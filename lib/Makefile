@@ -1,7 +1,7 @@
 CC=g++
 LD=g++
 AR=ar
-CC_FLAGS:=-g -DJSONCPP 
+CC_FLAGS:=-g -DJSONCPP -I $(INC_PATH)
 LD_FLAGS:= -ljsoncpp
 SRC_FILES:=jdt.cc
 OBJ_FILES:=$(patsubst %.cc,%.o,$(SRC_FILES))
