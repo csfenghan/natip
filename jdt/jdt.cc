@@ -11,10 +11,6 @@ namespace jdt {
  *	MsgBody实现
  **************************************/
 
-	std::string MsgBody::asString(){
-		
-	}
-
 /***************************************
  *	JdtEncode实现
  **************************************/
@@ -87,19 +83,35 @@ void Encode::encodeHead(uint8_t *ptr, int service, int type, int len) {
 // 初始化解析状态
 void Decode::init() { status_ = PARSING_INIT; }
 
-// 获取消息
-Value Decode::getFrontData() { return *data_parsed_.front(); }
-Value Decode::getBackData() { return *data_parsed_.back(); }
+// 释放一个消息
+void Decode::pop() { data_parsed_.pop(); }
 
 // 查看是否为空
 bool Decode::empty() { return data_parsed_.empty(); }
 
-// 释放一个消息
-void Decode::pop_front() { data_parsed_.pop_front(); }
-void Decode::pop_back() { data_parsed_.pop_back(); }
-
 // 查看当前的消息长度
 size_t Decode::size() { return data_parsed_.size(); }
+
+// 判断消息的格式
+bool Decode::isString() {
+        if (empty())
+                return false;
+        return data_parsed_.front()->getType() == TYPE_STRING;
+}
+
+bool Decode::isJson() {
+        if (empty())
+                return false;
+        return data_parsed_.front()->getType() == TYPE_JSON;
+}
+
+// 获取指定格式的数据
+std::string Decode::getString() {
+        ExtendMsgBody<std::string> *ptr;
+
+        ptr = (ExtendMsgBody<std::string> *)data_parsed_.front().get();
+        return ptr->getData();
+}
 
 // 功能：解析收到的数据流
 // 描述：解析以data开头，长度为len的字节流。解析后的数据保存在data_parsed_中
@@ -196,7 +208,7 @@ bool Decode::parseBody() {
 
         // 如果正确，加入data_parsed_中
         if (msg->isValid()) {
-                data_parsed_.push_back(msg);
+                data_parsed_.push(msg);
         } else {
                 is_error = true;
         }

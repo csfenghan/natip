@@ -7,6 +7,7 @@
 #include <deque>
 #include <iostream>
 #include <memory>
+#include <queue>
 #include <utility>
 
 // 是否支持jsoncpp库
@@ -59,16 +60,6 @@ class MsgBody {
         // 数据是否有效
         bool isValid() { return valid_; }
 
-#ifdef JSONCPP
-        // 将数据以json的格式返回，需要jsoncpp库支持
-        Json::Value asJson();
-#endif
-#ifdef OPENCV
-        // cv::Mat asImage();
-#endif
-        // 将数据以string的形式返回
-        std::string asString();
-
       protected:
         int type_;   // 数据的类型
         bool valid_; // 数据是否有效（可能发生损坏、丢失等导致）
@@ -83,6 +74,9 @@ template <typename T> class ExtendMsgBody : public MsgBody {
 
         // 设置数据
         void setData(const T &data) { data_ = data; }
+
+        // 读取数据
+        T getData() { return data_; }
 
         // 设置type
         void setType(int type) { type_ = type; }
@@ -139,16 +133,27 @@ class Decode {
         // 返回：如果长度len的字节流被全部解析，则返回true，否则返回false
         bool parse(uint8_t *data, uint32_t len);
 
-        // 获取消息
-        Value getFrontData();
-        Value getBackData();
+        // 判断要取出的消息的类型
+        bool isString();
+        bool isJson();
+        bool isImage();
+
+        // 按照对应的类型获取消息
+        std::string getString();
+	std::string popString();
+#ifdef JSONCPP
+        Json::Value getJson();
+	Json::Value popJson();
+#endif
+#ifdef OPENCV
+
+#endif
 
         // 查看是否为空
         bool empty();
 
         // 释放一个消息
-        void pop_front();
-        void pop_back();
+	void pop();
 
         // 查看当前的消息长度
         size_t size();
@@ -156,7 +161,7 @@ class Decode {
       private:
         MsgHead curr_head_;                // 正在解析的消息的消息头
         std::deque<uint8_t> data_parsing_; // 当前正在解析的字节流
-        std::deque<std::shared_ptr<Value>> data_parsed_; // 已结解析完的数据
+        std::queue<std::shared_ptr<Value>> data_parsed_; // 已结解析完的数据
         ParserStatus status_;                            // 当前的解析状态
 
         // 功能：解析协议头
