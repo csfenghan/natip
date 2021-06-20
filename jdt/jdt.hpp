@@ -64,7 +64,6 @@ class MsgBody {
         int type_;   // 数据的类型
         bool valid_; // 数据是否有效（可能发生损坏、丢失等导致）
 };
-using MsgBody = MsgBody;
 
 // 存放不同类型数据的类，负责写入数据的具体内容及其有效性
 template <typename T> class ExtendMsgBody : public MsgBody {
@@ -136,6 +135,8 @@ class Decode {
         bool nextIsString();
         bool nextIsJson();
         bool nextIsImage();
+
+	int nextType();
 
         // 按照对应的类型获取消息
         std::string getString();

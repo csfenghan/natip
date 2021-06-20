@@ -105,6 +105,8 @@ bool Decode::nextIsJson() {
         return data_parsed_.front()->getType() == TYPE_JSON;
 }
 
+int Decode::nextType() { return data_parsed_.front()->getType(); }
+
 // 获取指定格式的数据
 std::string Decode::getString() {
         ExtendMsgBody<std::string> *ptr;
@@ -231,7 +233,11 @@ bool Decode::parseBody() {
 }
 // 解析jsoncpp数据
 #ifdef JSONCPP
-std::shared_ptr<MsgBody> Decode::parseJson() {}
+std::shared_ptr<MsgBody> Decode::parseJson() {
+	auto msg = std::make_shared<ExtendMsgBody<Json::Value>>();
+
+	return msg;
+}
 #endif
 
 // 解析image(OpenCV)数据
@@ -244,13 +250,6 @@ std::shared_ptr<MsgBody> Decode::parseJson() {}
 // 返回：返回指向解析的数据的智能指针
 std::shared_ptr<MsgBody> Decode::parseString() {
         auto msg = std::make_shared<ExtendMsgBody<std::string>>();
-
-        // parse()函数应该检查这种情况，不应该发生这种行为
-        if (data_parsing_.size() < curr_head_.len) {
-                msg->setValid(false);
-                msg->setType(TYPE_UNDEFINE);
-                return msg;
-        }
 
         msg->setData(std::string(data_parsing_.begin() + HEAD_SIZE,
                                  data_parsing_.begin() + curr_head_.len));
