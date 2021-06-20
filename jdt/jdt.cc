@@ -113,6 +113,12 @@ std::string Decode::getString() {
         return ptr->getData();
 }
 
+std::string Decode::popString() {
+        std::string result = getString();
+        pop();
+        return result;
+}
+
 // 功能：解析收到的数据流
 // 描述：解析以data开头，长度为len的字节流。解析后的数据保存在data_parsed_中
 // 返回：如果长度len的字节流被全部解析，则返回true，否则返回false
@@ -170,7 +176,7 @@ bool Decode::parseBody() {
                 return false;
 
         bool is_error;
-        std::shared_ptr<Value> msg;
+        std::shared_ptr<MsgBody> msg;
 
         is_error = false;
         // 根据消息的type类型来选择对应的数据结构，并判断是否支持这种数据类型
@@ -225,18 +231,18 @@ bool Decode::parseBody() {
 }
 // 解析jsoncpp数据
 #ifdef JSONCPP
-std::shared_ptr<Value> Decode::parseJson() {}
+std::shared_ptr<MsgBody> Decode::parseJson() {}
 #endif
 
 // 解析image(OpenCV)数据
 #ifdef OPENCV
-// std::shared_ptr<Value> Decode::parseImage() {}
+// std::shared_ptr<MsgBody> Decode::parseImage() {}
 #endif
 
 // 功能：解析string数据
 // 描述：以string的格式解析存放在data_parsing_中的数据，并设置数据的类型和其有效性
 // 返回：返回指向解析的数据的智能指针
-std::shared_ptr<Value> Decode::parseString() {
+std::shared_ptr<MsgBody> Decode::parseString() {
         auto msg = std::make_shared<ExtendMsgBody<std::string>>();
 
         // parse()函数应该检查这种情况，不应该发生这种行为

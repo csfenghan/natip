@@ -64,7 +64,7 @@ class MsgBody {
         int type_;   // 数据的类型
         bool valid_; // 数据是否有效（可能发生损坏、丢失等导致）
 };
-using Value = MsgBody;
+using MsgBody = MsgBody;
 
 // 存放不同类型数据的类，负责写入数据的具体内容及其有效性
 template <typename T> class ExtendMsgBody : public MsgBody {
@@ -160,7 +160,7 @@ class Decode {
       private:
         MsgHead curr_head_;                // 正在解析的消息的消息头
         std::deque<uint8_t> data_parsing_; // 当前正在解析的字节流
-        std::queue<std::shared_ptr<Value>> data_parsed_; // 已结解析完的数据
+        std::queue<std::shared_ptr<MsgBody>> data_parsed_; // 已结解析完的数据
         ParserStatus status_;                            // 当前的解析状态
 
         // 初始化解析器状态
@@ -178,15 +178,15 @@ class Decode {
         bool parseBody();
 
         // 解析jsoncpp数据(需要jsoncpp支持)
-        std::shared_ptr<Value> parseJson();
+        std::shared_ptr<MsgBody> parseJson();
 
         // 解析image(OpenCV)数据(需要opencv支持)
-        std::shared_ptr<Value> parseImage();
+        std::shared_ptr<MsgBody> parseImage();
 
         // 功能：解析string数据
         // 描述：以string的格式解析存放在data_parsing_中的数据，并设置数据的类型和其有效性
         // 返回：返回指向解析的数据的智能指针
-        std::shared_ptr<Value> parseString();
+        std::shared_ptr<MsgBody> parseString();
 };
 
 } // namespace jdt

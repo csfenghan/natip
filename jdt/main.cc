@@ -6,16 +6,24 @@
 int main() {
         jdt::Encode encode;
         jdt::Decode decode;
-        std::string test("it's a test");
+        std::string test1("it's a test,");
+        std::string test2("maybe it's not correct,");
+        std::string test3("test test...");
 
-        auto data = encode.encode(test);
-        if (!decode.parse(data.first, data.second)) {
-                std::cerr << "parse failed";
-                return 0;
-        }
+        uint8_t buf[1024];
 
-        if (!decode.empty()) {
-                if (decode.nextIsString())
-                        std::cout << decode.getString() << std::endl;
+        auto data1 = encode.encode(test1);
+        auto data2 = encode.encode(test2);
+        auto data3 = encode.encode(test3);
+
+        decode.parse(data1.first, data1.second - 10);
+        //decode.parse(data1.first + data1.second - 10, 10);
+        // decode.parse(data2.first, data2.second);
+        // decode.parse(data3.first, data3.second);
+
+        while (!decode.empty()) {
+                std::cout << decode.popString() << std::endl;
+                //std::cout << decode.popString() << std::endl;
+                //std::cout << decode.popString() << std::endl;
         }
 }
