@@ -63,7 +63,9 @@ std::pair<uint8_t *, uint32_t> Encode::encode(const Json::Value &data) {
 #endif
 
 // 释放分配的资源
-void Encode::release(const std::pair<uint8_t *, uint32_t> &data) { delete data.first; }
+void Encode::release(const std::pair<uint8_t *, uint32_t> &data) {
+        delete data.first;
+}
 
 // 按照struct MsgHead顺序设置协议头
 void Encode::encodeHead(uint8_t *ptr, int service, int type, int len) {
@@ -93,6 +95,12 @@ bool Decode::empty() { return data_parsed_.empty(); }
 size_t Decode::size() { return data_parsed_.size(); }
 
 // 判断消息的格式
+bool Decode::nextIsError() {
+        if (empty())
+                return false;
+        return data_parsed_.front()->getService() == SERVICE_ERROR;
+}
+
 bool Decode::nextIsString() {
         if (empty())
                 return false;
@@ -108,6 +116,8 @@ bool Decode::nextIsJson() {
 int Decode::nextType() { return data_parsed_.front()->getType(); }
 
 // 获取指定格式的数据
+std::string Decode::getError() { return getString(); }
+std::string Decode::popError() { return popString(); }
 std::string Decode::getString() {
         ExtendMsgBody<std::string> *ptr;
 
@@ -206,8 +216,8 @@ bool Decode::parseBody() {
                 msg = parseJson();
                 break;
 #endif
-                fprintf(stderr,
-                        "can't recognize the type JSONCPP,you need jsoncpp library\n");
+                fprintf(stderr, "can't recognize the type JSONCPP,you need "
+                                "jsoncpp library\n");
                 is_error = true;
                 break;
 
@@ -217,8 +227,9 @@ bool Decode::parseBody() {
                 msg = parseImage();
                 break;
 #endif
-                fprintf(stderr,
-                        "can't recognize the type IMAGE,you need OpenCV library\n");
+                fprintf(
+                    stderr,
+                    "can't recognize the type IMAGE,you need OpenCV library\n");
                 is_error = true;
                 break;
 
@@ -258,7 +269,8 @@ std::shared_ptr<MsgBody> Decode::parseJson() {
         ptr = (char *)&data_parsing_[0];
         msg->setType(TYPE_JSON);
 
-        if (!reader.parse(ptr + HEAD_SIZE, ptr + curr_head_.len, value, false)) {
+        if (!reader.parse(ptr + HEAD_SIZE, ptr + curr_head_.len, value,
+                          false)) {
                 msg->setValid(false);
                 return msg;
         }

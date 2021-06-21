@@ -30,8 +30,9 @@ namespace jdt {
 #define HEAD_SIZE 8 // 头部大小8字节
 
 // (2) 服务的类型
-#define SERVICE_SEND 1 //发送
-#define SERVICE_REQ 2  //申请接收
+#define SERVICE_SEND 1  //发送
+#define SERVICE_REQ 2   //申请接收
+#define SERVICE_ERROR 3 //错误
 
 // (3) 数据的类型
 #define TYPE_UNDEFINE 0 // 未定义类型
@@ -39,7 +40,7 @@ namespace jdt {
 #define TYPE_IMAGE 2    // image数据
 #define TYPE_STRING 3   // string数据
 
-// (3)协议头数据格式(实际上用不到，只是规范数据的格式，数据分别以magic、version、service、data_len顺序存放)
+// (3)协议头数据格式(规范数据的格式，数据分别以magic、version、service、data_len顺序存放)
 struct MsgHead {
         uint8_t service; // 服务的类型(1字节)
         uint8_t type;    // 数据的类型(1字节)
@@ -54,6 +55,9 @@ class MsgBody {
         MsgBody() : type_(TYPE_UNDEFINE), valid_(false) {}
         ~MsgBody() {}
 
+        // 获取服务类型
+        int getService() { return service_; }
+
         // 获取数据类型
         int getType() { return type_; }
 
@@ -61,7 +65,8 @@ class MsgBody {
         bool isValid() { return valid_; }
 
       protected:
-        int type_;   // 数据的类型
+        int service_; //服务类型
+        int type_;    // 数据的类型
         bool valid_; // 数据是否有效（可能发生损坏、丢失等导致）
 };
 
@@ -76,6 +81,9 @@ template <typename T> class ExtendMsgBody : public MsgBody {
 
         // 读取数据
         T getData() { return data_; }
+
+        // 设置服务类型
+        void setService(int service) { service_ = service; }
 
         // 设置type
         void setType(int type) { type_ = type; }
@@ -132,13 +140,16 @@ class Decode {
         bool parse(uint8_t *data, uint32_t len);
 
         // 判断要取出的消息的类型
+	bool nextIsError();
         bool nextIsString();
         bool nextIsJson();
         bool nextIsImage();
 
-	int nextType();
+        int nextType();
 
         // 按照对应的类型获取消息
+	std::string getError();
+	std::string popError();
         std::string getString();
         std::string popString();
 #ifdef JSONCPP
@@ -162,7 +173,7 @@ class Decode {
         MsgHead curr_head_;                // 正在解析的消息的消息头
         std::deque<uint8_t> data_parsing_; // 当前正在解析的字节流
         std::queue<std::shared_ptr<MsgBody>> data_parsed_; // 已结解析完的数据
-        ParserStatus status_;                            // 当前的解析状态
+        ParserStatus status_; // 当前的解析状态
 
         // 初始化解析器状态
         void init();
