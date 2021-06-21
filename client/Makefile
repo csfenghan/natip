@@ -1,3 +1,5 @@
+include ../makefile.define
+
 CC=g++
 LD=g++
 CC_FLAGS:=-g -I $(INC_PATH) -DJSONCPP

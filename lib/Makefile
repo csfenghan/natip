@@ -1,3 +1,5 @@
+include ../makefile.define
+
 CC=g++
 LD=g++
 AR=ar
