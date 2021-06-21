@@ -26,13 +26,14 @@ void NatIpServer::loadConfig(std::string path) {
 
         // 2.使用config文件进行配置
         if (!root.isMember("server"))
-                err_quit("can't found key: 'server' in config file %s", path.c_str());
+                err_quit("can't found key: 'server' in config file %s",
+                         path.c_str());
         server = root["server"];
 
         if (!server.isMember("listen_port"))
-                err_quit(
-                    "can't found key: 'listen_port' in object 'server' in config file %s",
-                    path.c_str());
+                err_quit("can't found key: 'listen_port' in object 'server' in "
+                         "config file %s",
+                         path.c_str());
 
         listen_port_ = server["listen_port"].asString();
 }
@@ -50,7 +51,8 @@ void NatIpServer::tcpServer() {
         while (true) {
                 // 2.accept连接，并处理被信号中断的情况
                 client_len = sizeof(client_addr);
-                if ((connfd = accept(listen_fd_, (SA *)&client_addr, &client_len)) < 0) {
+                if ((connfd = accept(listen_fd_, (SA *)&client_addr,
+                                     &client_len)) < 0) {
                         if (errno == EINTR)
                                 continue;
                         else
@@ -59,10 +61,10 @@ void NatIpServer::tcpServer() {
 
                 // 3.子进程处理服务
                 if ((pid = Fork()) == 0) {
-                        printf("a new tcp connect\n");
                         close(listen_fd_);
 
-                        echo(connfd);
+                        // 接收客户发来的配置，保存客户端的信息
+                        setClientData(connfd);
 
                         printf("a tcp connect disconnect\n");
                         exit(0);
@@ -71,20 +73,57 @@ void NatIpServer::tcpServer() {
         }
 }
 
-// 服务函数
-void NatIpServer::echo(int connfd) {
+// 根据来自客户端的消息设置客户数据
+void NatIpServer::setClientData(int connfd) {
         size_t n;
         char buf[MAXLINE];
         Json::Value root;
-        Json::StyledWriter swriter;
         jdt::Decode decode;
-        std::ofstream ofs;
+        ClientData client_data;
+        struct sockaddr_in addr;
+        socklen_t len;
 
-        while ((n = Rio_readn(connfd, buf, MAXLINE)) != 0) {
+        // 接收一个json文件
+        while (!decode.empty()) {
+                n = Rio_readn(connfd, buf, MAXLINE);
                 decode.parse((uint8_t *)buf, n);
         }
-        ofs.open("client1.json");
-        ofs << swriter.write(decode.popJson());
+        if (!decode.nextIsJson())
+                err_ret("received file not json!");
+        root = decode.popJson();
+
+        // 检查json中的信息是否正确，如果不正确则退出，并给客户发送一条错误命令
+        if (!root.isMember("name")) {
+
+                err_ret("收到的json文件中没有name信息");
+        }
+
+        // 如果已经有了name为root["name"]的客户端，则发送错误消息
+        if (client_data_.find(root["name"].asString()) != client_data_.end()) {
+
+                err_ret("name:%s 已经存在！", root["name"].asString().c_str());
+        }
+
+        // 设置client_data
+        memset(&client_data, 0, sizeof(client_data));
+        client_data.name = root["name"].asString();
+        if (getpeername(connfd, (SA *)&addr, &len) == -1) {
+                err_ret("无法获取客户端地址!");
+        }
+
+        client_data.addr = std::string(inet_ntoa(addr.sin_addr));
+        client_data.port = ntohs(addr.sin_port);
+
+        if (root.isMember("info")) {
+                client_data.info = root["info"].asString();
+        }
+
+        // 添加name节点
+        client_data_[root["name"].asString()] = client_data;
+
+        printf("添加客户:\n\tname:%s\n\tip:%s\n\tport:%d\n\tinfo:%s\n",
+               client_data.name.c_str(), client_data.addr.c_str(),
+               client_data.port, client_data.info.c_str());
 }
 
 // chld信号处理函数

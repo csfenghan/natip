@@ -4,13 +4,15 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "jsoncpp/json/json.h"
 
 class NatIpServer {
         // 保存客户端信息
         struct ClientData {
                 std::string name;
                 std::string addr;
-                std::string port;
+		uint16_t port;
+		std::string info;
         };
         /***************************************
          *	public
@@ -30,7 +32,10 @@ class NatIpServer {
          **************************************/
       private:
         // 客户端交互
-        void echo(int connfd);
+	void setClientData(int connfd);
+
+	// 接收来自客户端的json文件，并保存客户信息
+		
 
         // 信号处理函数
         static void sigchldHandler(int sig);
