@@ -26,8 +26,7 @@ void NatIpServer::loadConfig(std::string path) {
 
         // 2.使用config文件进行配置
         if (!root.isMember("server"))
-                err_quit("can't found key: 'server' in config file %s",
-                         path.c_str());
+                err_quit("can't found key: 'server' in config file %s", path.c_str());
         server = root["server"];
 
         if (!server.isMember("listen_port"))
@@ -51,8 +50,7 @@ void NatIpServer::tcpServer() {
         while (true) {
                 // 2.accept连接，并处理被信号中断的情况
                 client_len = sizeof(client_addr);
-                if ((connfd = accept(listen_fd_, (SA *)&client_addr,
-                                     &client_len)) < 0) {
+                if ((connfd = accept(listen_fd_, (SA *)&client_addr, &client_len)) < 0) {
                         if (errno == EINTR)
                                 continue;
                         else
@@ -76,24 +74,16 @@ void NatIpServer::tcpServer() {
 
 // 根据来自客户端的消息设置客户数据
 void NatIpServer::setClientData(int connfd) {
-        size_t n;
-        char buf[MAXLINE];
         Json::Value root;
         jdt::Decode decode;
         ClientData client_data;
         struct sockaddr_in addr;
         socklen_t len;
+        jdt::Jdt jdt_manger;
+        jdt::Msg msg;
 
-        // 接收一个json文件
-        while (decode.empty()) {
-                n = Rio_readn(connfd, buf, MAXLINE);
-                decode.parse((uint8_t *)buf, n);
-                printf("parsing file\n");
-        }
-        if (!decode.nextIsJson())
-                err_ret("receivfed file format error");
-        root = decode.popJson();
-
+        msg = jdt_manger.recvMsg();
+        root = msg.asJson();
         // 检查json中的信息是否正确，如果不正确则退出，并给客户发送一条错误命令
         if (!root.isMember("name")) {
 
@@ -123,8 +113,8 @@ void NatIpServer::setClientData(int connfd) {
         client_data_[root["name"].asString()] = client_data;
 
         printf("add client:\n\tname:%s\n\tip:%s\n\tport:%d\n\tinfo:%s\n",
-               client_data.name.c_str(), client_data.addr.c_str(),
-               client_data.port, client_data.info.c_str());
+               client_data.name.c_str(), client_data.addr.c_str(), client_data.port,
+               client_data.info.c_str());
 }
 
 // chld信号处理函数
