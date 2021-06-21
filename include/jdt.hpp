@@ -96,18 +96,18 @@ template <typename T> class ExtendMsgBody : public MsgBody {
 };
 
 // 通用的数据类型
-class Msg : public MsgBody {
+class Msg {
       public:
         Msg() {}
         Msg(const std::shared_ptr<MsgBody> &ptr) : data_(ptr) {}
 
         // 查看是否是string类型
-        bool isString() const { return getType() == TYPE_STRING; }
+        bool isString() const { return data_->getType() == TYPE_STRING; }
 #ifdef JSONCPP
         // 查看是否是json类型
-        bool isJson() const { return getType() == TYPE_JSON; }
+        bool isJson() const { return data_->getType() == TYPE_JSON; }
 #endif
-        bool isError() const { return getType() == TYPE_ERROR; }
+        bool isError() const { return data_->getType() == TYPE_ERROR; }
 
         // 以string类型获取数据
         const std::string asString() const;

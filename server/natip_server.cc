@@ -59,7 +59,7 @@ void NatIpServer::tcpServer() {
 
                 // 3.子进程处理服务
                 if ((pid = Fork()) == 0) {
-                        printf("a new connect");
+                        printf("a new connect\n");
                         close(listen_fd_);
 
                         // 接收客户发来的配置，保存客户端的信息
@@ -84,7 +84,10 @@ void NatIpServer::setClientData(int connfd) {
 
 	jdt_manger.setFd(connfd);
         msg = jdt_manger.recvMsg();
+	//if(!msg.isValid())
+//		err_sys("msg is invalid");
         root = msg.asJson();
+
         // 检查json中的信息是否正确，如果不正确则退出，并给客户发送一条错误命令
         if (!root.isMember("name")) {
 

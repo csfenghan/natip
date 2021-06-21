@@ -320,8 +320,7 @@ const Msg Jdt::recvMsg() {
         int n;
 
         while (decode_.empty()) {
-                if ((n = Rio_readn(socket_fd_, buf, MAXLINE)) == 0)
-                        break;
+                n = Rio_readn(socket_fd_, buf, MAXLINE);
                 decode_.parse((uint8_t *)buf, n);
         }
         if (decode_.empty())
