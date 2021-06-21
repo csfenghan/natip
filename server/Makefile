@@ -19,5 +19,6 @@ $(FINAL_OBJ):$(OBJ_FILES)
 
 .PHONY:clean
 clean:
+	echo $(OBJ_FILES)
 	rm $(FINAL_OBJ)
 	rm $(OBJ_FILES)	
