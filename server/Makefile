@@ -8,7 +8,7 @@ LD_FLAGS:= -lunix_lib -lpthread -ljsoncpp -ljdt -L $(LIB_PATH)
 SRC_FILES:=main.cc \
 	./natip_server.cc
 OBJ_FILES:=$(patsubst %.cc,%.o,$(SRC_FILES))
-FINAL_OBJ=server
+FINAL_OBJ=Server
 
 all:$(FINAL_OBJ)
 $(FINAL_OBJ):$(OBJ_FILES)
@@ -19,6 +19,5 @@ $(FINAL_OBJ):$(OBJ_FILES)
 
 .PHONY:clean
 clean:
-	echo $(OBJ_FILES)
 	rm $(FINAL_OBJ)
 	rm $(OBJ_FILES)	

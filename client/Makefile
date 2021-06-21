@@ -7,7 +7,7 @@ LD_FLAGS:= -lunix_lib -lpthread -ljsoncpp -ljdt -L $(LIB_PATH)
 SRC_FILES:=main.cc \
 	./natip_client.cc
 OBJ_FILES:=$(patsubst %.cc,%.o,$(SRC_FILES))
-FINAL_OBJ=client
+FINAL_OBJ=Client
 
 all:$(FINAL_OBJ)
 $(FINAL_OBJ):$(OBJ_FILES)
