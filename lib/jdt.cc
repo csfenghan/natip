@@ -12,7 +12,7 @@ namespace jdt {
  *	MsgBody实现
  **************************************/
 // 以string类型获取数据
-const std::string Value::asString() const {
+const std::string Msg::asString() const {
         if (!isString())
                 err_ret("this data is not string format!");
         ExtendMsgBody<std::string> *ptr;
@@ -21,7 +21,7 @@ const std::string Value::asString() const {
         return ptr->getData();
 }
 #ifdef JSONCPP
-const Json::Value Value::asJson() const {
+const Json::Value Msg::asJson() const {
         if (!isJson())
                 err_ret("this data is not json format!");
         ExtendMsgBody<Json::Value> *ptr;
@@ -30,7 +30,7 @@ const Json::Value Value::asJson() const {
         return ptr->getData();
 }
 #endif
-const std::string Value::asError() const {
+const std::string Msg::asError() const {
         if (!isError())
                 err_ret("this msg is not error data!");
 
@@ -108,12 +108,11 @@ void Encode::encodeHead(uint8_t *ptr, int service, int type, int len) {
 /***************************************
  *	JdtDecode实现
  **************************************/
+// 构造函数
+Decode::Decode() { init(); }
 
 // 初始化解析状态
 void Decode::init() { status_ = PARSING_INIT; }
-
-// 释放一个消息
-void Decode::pop() { data_parsed_.pop(); }
 
 // 查看是否为空
 bool Decode::empty() { return data_parsed_.empty(); }
@@ -121,52 +120,17 @@ bool Decode::empty() { return data_parsed_.empty(); }
 // 查看当前的消息长度
 size_t Decode::size() { return data_parsed_.size(); }
 
-// 判断消息的格式
-bool Decode::nextIsString() {
-        if (empty())
-                return false;
-        return data_parsed_.front()->getType() == TYPE_STRING;
-}
+// 获取一个消息
+const Msg Decode::getOneMsg(bool is_release) {
+        Msg result(data_parsed_.front());
 
-bool Decode::nextIsJson() {
-        if (empty())
-                return false;
-        return data_parsed_.front()->getType() == TYPE_JSON;
-}
-
-int Decode::nextType() { return data_parsed_.front()->getType(); }
-
-// 获取指定格式的数据
-std::string Decode::getError() { return getString(); }
-std::string Decode::popError() { return popString(); }
-std::string Decode::getString() {
-        ExtendMsgBody<std::string> *ptr;
-
-        ptr = (ExtendMsgBody<std::string> *)data_parsed_.front().get();
-        return ptr->getData();
-}
-
-std::string Decode::popString() {
-        std::string result = getString();
-        pop();
+        if (is_release)
+                releaseOneMsg();
         return result;
 }
 
-#ifdef JSONCPP
-Json::Value Decode::getJson() {
-        ExtendMsgBody<Json::Value> *ptr;
-
-        ptr = (ExtendMsgBody<Json::Value> *)data_parsed_.front().get();
-        return ptr->getData();
-}
-
-Json::Value Decode::popJson() {
-        auto result = getJson();
-        pop();
-        return result;
-}
-
-#endif
+// 释放一个消息
+void Decode::releaseOneMsg() { data_parsed_.pop(); }
 
 // 功能：解析收到的数据流
 // 描述：解析以data开头，长度为len的字节流。解析后的数据保存在data_parsed_中

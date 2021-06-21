@@ -64,7 +64,16 @@ class MsgBody {
         // 数据是否有效
         bool isValid() const { return valid_; }
 
-      protected:
+        // 设置服务类型
+        void setService(int service) { service_ = service; }
+
+        // 设置type
+        void setType(int type) { type_ = type; }
+
+        // 设置有效性
+        void setValid(bool is_valid) { valid_ = is_valid; }
+
+      private:
         int service_; //服务类型
         int type_;    // 数据的类型
         bool valid_;  // 数据是否有效（可能发生损坏、丢失等导致）
@@ -80,24 +89,17 @@ template <typename T> class ExtendMsgBody : public MsgBody {
         void setData(const T &data) { data_ = data; }
 
         // 读取数据
-        T getData() { return data_; }
-
-        // 设置服务类型
-        void setService(int service) { service_ = service; }
-
-        // 设置type
-        void setType(int type) { type_ = type; }
-
-        // 设置有效性
-        void setValid(bool is_valid) { valid_ = is_valid; }
+        const T getData() const { return data_; }
 
       private:
         T data_;
 };
 
 // 通用的数据类型
-class Value : public MsgBody {
+class Msg : public MsgBody {
       public:
+        Msg(const std::shared_ptr<MsgBody> &ptr) : data_(ptr) {}
+
         // 查看是否是string类型
         bool isString() const { return getType() == TYPE_STRING; }
 #ifdef JSONCPP
@@ -154,42 +156,25 @@ class Decode {
         };
 
       public:
-        Decode() { init(); }
+        Decode();
 
         // 功能：解析收到的数据流
         // 描述：解析以data开头，长度为len的字节流。解析后的数据保存在data_parsed_中
         // 返回：如果长度len的字节流被全部解析，则返回true，否则返回false
         bool parse(uint8_t *data, uint32_t len);
 
-        // 判断要取出的消息的类型
-        bool nextIsError();
-        bool nextIsString();
-        bool nextIsJson();
-        bool nextIsImage();
-
-        int nextType();
-
-        // 按照对应的类型获取消息
-        std::string getError();
-        std::string popError();
-        std::string getString();
-        std::string popString();
-#ifdef JSONCPP
-        Json::Value getJson();
-        Json::Value popJson();
-#endif
-#ifdef OPENCV
-
-#endif
-
         // 查看是否为空
         bool empty();
 
-        // 释放一个消息
-        void pop();
-
         // 查看当前的消息长度
         size_t size();
+
+        // 说明：获取一个消息
+	// 描述：如果is_release为ture，则获取一个Msg的同时Decode对象会释放掉这个Msg的信息
+        const Msg getOneMsg(bool is_release = false);
+
+        // 释放一个消息
+        void releaseOneMsg();
 
       private:
         MsgHead curr_head_;                // 正在解析的消息的消息头
