@@ -61,13 +61,13 @@ void NatIpServer::tcpServer() {
 
                 // 3.子进程处理服务
                 if ((pid = Fork()) == 0) {
-                        printf("a new connect\n");
+                        printf("a new connect");
                         close(listen_fd_);
 
                         // 接收客户发来的配置，保存客户端的信息
                         setClientData(connfd);
 
-                        printf("a tcp connect disconnect\n");
+                        printf("a connect disconnect\n");
                         exit(0);
                 }
                 close(connfd);
@@ -88,28 +88,28 @@ void NatIpServer::setClientData(int connfd) {
         while (decode.empty()) {
                 n = Rio_readn(connfd, buf, MAXLINE);
                 decode.parse((uint8_t *)buf, n);
-                printf("正在解析文件\n");
+                printf("parsing file\n");
         }
         if (!decode.nextIsJson())
-                err_ret("接收到的文件不是json");
+                err_ret("receivfed file format error");
         root = decode.popJson();
 
         // 检查json中的信息是否正确，如果不正确则退出，并给客户发送一条错误命令
         if (!root.isMember("name")) {
 
-                err_ret("收到的json文件中没有name信息");
+                err_ret("not name data in json file");
         }
 
         // 如果已经有了name为root["name"]的客户端，则发送错误消息
         if (client_data_.find(root["name"].asString()) != client_data_.end()) {
 
-                err_ret("name:%s 已经存在！", root["name"].asString().c_str());
+                err_ret("name:%s already exist！", root["name"].asString().c_str());
         }
 
         // 设置client_data
         len = sizeof(struct sockaddr_in);
         if (getpeername(connfd, (SA *)&addr, &len) == -1) {
-                err_ret("无法获取客户端地址!");
+                err_ret("can't get client ip!");
         }
 
         client_data.name = root["name"].asString();
@@ -122,7 +122,7 @@ void NatIpServer::setClientData(int connfd) {
         // 添加name节点
         client_data_[root["name"].asString()] = client_data;
 
-        printf("添加客户:\n\tname:%s\n\tip:%s\n\tport:%d\n\tinfo:%s\n",
+        printf("add client:\n\tname:%s\n\tip:%s\n\tport:%d\n\tinfo:%s\n",
                client_data.name.c_str(), client_data.addr.c_str(),
                client_data.port, client_data.info.c_str());
 }
