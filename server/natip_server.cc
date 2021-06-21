@@ -82,6 +82,7 @@ void NatIpServer::setClientData(int connfd) {
         jdt::Jdt jdt_manger;
         jdt::Msg msg;
 
+	jdt_manger.setFd(connfd);
         msg = jdt_manger.recvMsg();
         root = msg.asJson();
         // 检查json中的信息是否正确，如果不正确则退出，并给客户发送一条错误命令

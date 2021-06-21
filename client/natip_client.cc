@@ -52,5 +52,6 @@ void NatIpClient::tcpClient() {
         if (!reader.parse(ifs, root, true))
                 err_ret("can't parse info.json");
 
+        jdt_manger.setFd(socket_fd_);
         jdt_manger.sendMsg(root);
 }
