@@ -61,6 +61,7 @@ void NatIpServer::tcpServer() {
 
                 // 3.子进程处理服务
                 if ((pid = Fork()) == 0) {
+                        printf("a new connect\n");
                         close(listen_fd_);
 
                         // 接收客户发来的配置，保存客户端的信息
@@ -84,12 +85,13 @@ void NatIpServer::setClientData(int connfd) {
         socklen_t len;
 
         // 接收一个json文件
-        while (!decode.empty()) {
+        while (decode.empty()) {
                 n = Rio_readn(connfd, buf, MAXLINE);
                 decode.parse((uint8_t *)buf, n);
+                printf("正在解析文件\n");
         }
         if (!decode.nextIsJson())
-                err_ret("received file not json!");
+                err_ret("接收到的文件不是json");
         root = decode.popJson();
 
         // 检查json中的信息是否正确，如果不正确则退出，并给客户发送一条错误命令
@@ -105,15 +107,14 @@ void NatIpServer::setClientData(int connfd) {
         }
 
         // 设置client_data
-        memset(&client_data, 0, sizeof(client_data));
-        client_data.name = root["name"].asString();
+        len = sizeof(struct sockaddr_in);
         if (getpeername(connfd, (SA *)&addr, &len) == -1) {
                 err_ret("无法获取客户端地址!");
         }
 
+        client_data.name = root["name"].asString();
         client_data.addr = std::string(inet_ntoa(addr.sin_addr));
         client_data.port = ntohs(addr.sin_port);
-
         if (root.isMember("info")) {
                 client_data.info = root["info"].asString();
         }
