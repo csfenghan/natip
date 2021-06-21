@@ -283,4 +283,61 @@ std::shared_ptr<MsgBody> Decode::parseString() {
         return msg;
 }
 
+/***************************************
+ *	Jdt实现
+ **************************************/
+void Jdt::setFd(int fd) {
+        // 先关闭之前的描述符
+        if (!isInit())
+                close(socket_fd_);
+        socket_fd_ = fd;
+}
+
+void Jdt::sendMsg(const std::string &data) {
+        if (!isInit())
+                err_sys("can't use uninitialized fd");
+        Encode encode;
+
+        auto data_encoded = encode.encode(data);
+        Rio_writen(socket_fd_, data_encoded.first, data_encoded.second);
+}
+
+#ifdef JSONCPP
+void Jdt::sendMsg(const Json::Value &data) {
+        if (!isInit())
+                err_sys("can't use uninitialized fd");
+        Encode encode;
+
+        auto data_encoded = encode.encode(data);
+        Rio_writen(socket_fd_, data_encoded.first, data_encoded.second);
+}
+#endif
+
+const Msg Jdt::recvMsg() {
+        if (!isInit())
+                err_sys("can't use uninitialized fd");
+        char buf[MAXLINE];
+        int n;
+
+        while (decode_.empty()) {
+                if ((n = Rio_readn(socket_fd_, buf, MAXLINE)) == 0)
+                        break;
+                decode_.parse((uint8_t *)buf, n);
+        }
+        if (decode_.empty())
+                return Msg();
+        return Msg(decode_.getOneMsg(true));
+}
+
+void Jdt::release() {
+        if (isInit())
+                close(socket_fd_);
+}
+
+bool Jdt::isInit() const {
+        if (socket_fd_ == -1)
+                return false;
+        return true;
+}
+
 } // namespace jdt

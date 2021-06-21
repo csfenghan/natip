@@ -22,9 +22,9 @@
 
 namespace jdt {
 
-/***************************************
- *	一、 消息体参数
- **************************************/
+/******************************************************************************
+ * 消息的内容
+ *****************************************************************************/
 // 1.协议头以及其用到的参数
 // (1) 头部大小
 #define HEAD_SIZE 8 // 头部大小8字节
@@ -98,6 +98,7 @@ template <typename T> class ExtendMsgBody : public MsgBody {
 // 通用的数据类型
 class Msg : public MsgBody {
       public:
+        Msg() {}
         Msg(const std::shared_ptr<MsgBody> &ptr) : data_(ptr) {}
 
         // 查看是否是string类型
@@ -119,9 +120,10 @@ class Msg : public MsgBody {
         std::shared_ptr<MsgBody> data_;
 };
 
-/***************************************
- *	二、Encode
- **************************************/
+/**********************************************************************************************
+ * class:Encode
+ * description:负责打包要发送的数据
+ *********************************************************************************************/
 class Encode {
       public:
         // 功能：编码string数据
@@ -135,8 +137,6 @@ class Encode {
 
         // opencv image文件传输（需要有opencv库）
 #ifdef OPENCV
-        //       std::pair<uint8_t *, uint32_t> encode(const cv::Mat &img);
-
 #endif
         // 销毁new的资源
         void release(const std::pair<uint8_t *, uint32_t> &data);
@@ -145,9 +145,10 @@ class Encode {
         void encodeHead(uint8_t *ptr, int service, int type, int len);
 };
 
-/***************************************
- *	三、Decode
- **************************************/
+/***********************************************************************************************
+ * class:Decode
+ * description:负责解析收到的数据,数据存放在一个队列中，可以通过getOneMsg接口获取一个已解析的消息
+ **********************************************************************************************/
 class Decode {
         enum ParserStatus {
                 PARSING_INIT = 1, // 协议初始化
@@ -170,7 +171,7 @@ class Decode {
         size_t size();
 
         // 说明：获取一个消息
-	// 描述：如果is_release为ture，则获取一个Msg的同时Decode对象会释放掉这个Msg的信息
+        // 描述：如果is_release为ture，则获取一个Msg的同时Decode对象会释放掉这个Msg的信息
         const Msg getOneMsg(bool is_release = false);
 
         // 释放一个消息
@@ -208,5 +209,36 @@ class Decode {
         std::shared_ptr<MsgBody> parseString();
 };
 
+/***************************************************************************************
+ * class：Jdt
+ * description：如果使用Jdt发送接收数据，则套接字接口将完全由Jdt管理，不要在其他位置使用此套接字接口
+ **************************************************************************************/
+class Jdt {
+      public:
+        Jdt() : socket_fd_(-1) {}
+        Jdt(int fd) : socket_fd_(fd) {}
+
+        // 设置socket
+        void setFd(int fd);
+
+        // 对协议的封装，负责发送消息
+        void sendMsg(const std::string &data);
+
+#ifdef JSONCPP
+        void sendMsg(const Json::Value &data);
+#endif
+
+        // 对协议的封装，负责接收消息
+        const Msg recvMsg();
+
+        // 释放资源
+        void release();
+
+      private:
+        bool isInit() const;
+
+        Decode decode_;
+        int socket_fd_;
+};
 } // namespace jdt
 #endif
