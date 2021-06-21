@@ -30,15 +30,15 @@ namespace jdt {
 #define HEAD_SIZE 8 // 头部大小8字节
 
 // (2) 服务的类型
-#define SERVICE_SEND 1  //发送
-#define SERVICE_REQ 2   //申请接收
-#define SERVICE_ERROR 3 //错误
+#define SERVICE_SEND 1 //发送
+#define SERVICE_RES 2  //申请接收
 
 // (3) 数据的类型
 #define TYPE_UNDEFINE 0 // 未定义类型
 #define TYPE_JSON 1     // json数据
 #define TYPE_IMAGE 2    // image数据
 #define TYPE_STRING 3   // string数据
+#define TYPE_ERROR 4    // 表示发送的数据格式错误
 
 // (3)协议头数据格式(规范数据的格式，数据分别以magic、version、service、data_len顺序存放)
 struct MsgHead {
@@ -56,18 +56,18 @@ class MsgBody {
         ~MsgBody() {}
 
         // 获取服务类型
-        int getService() { return service_; }
+        int getService() const { return service_; }
 
         // 获取数据类型
-        int getType() { return type_; }
+        int getType() const { return type_; }
 
         // 数据是否有效
-        bool isValid() { return valid_; }
+        bool isValid() const { return valid_; }
 
       protected:
         int service_; //服务类型
         int type_;    // 数据的类型
-        bool valid_; // 数据是否有效（可能发生损坏、丢失等导致）
+        bool valid_;  // 数据是否有效（可能发生损坏、丢失等导致）
 };
 
 // 存放不同类型数据的类，负责写入数据的具体内容及其有效性
@@ -93,6 +93,28 @@ template <typename T> class ExtendMsgBody : public MsgBody {
 
       private:
         T data_;
+};
+
+// 通用的数据类型
+class Value : public MsgBody {
+      public:
+        // 查看是否是string类型
+        bool isString() const { return getType() == TYPE_STRING; }
+#ifdef JSONCPP
+        // 查看是否是json类型
+        bool isJson() const { return getType() == TYPE_JSON; }
+#endif
+        bool isError() const { return getType() == TYPE_ERROR; }
+
+        // 以string类型获取数据
+        const std::string asString() const;
+#ifdef JSONCPP
+        const Json::Value asJson() const;
+#endif
+        const std::string asError() const;
+
+      private:
+        std::shared_ptr<MsgBody> data_;
 };
 
 /***************************************
@@ -140,7 +162,7 @@ class Decode {
         bool parse(uint8_t *data, uint32_t len);
 
         // 判断要取出的消息的类型
-	bool nextIsError();
+        bool nextIsError();
         bool nextIsString();
         bool nextIsJson();
         bool nextIsImage();
@@ -148,8 +170,8 @@ class Decode {
         int nextType();
 
         // 按照对应的类型获取消息
-	std::string getError();
-	std::string popError();
+        std::string getError();
+        std::string popError();
         std::string getString();
         std::string popString();
 #ifdef JSONCPP
@@ -173,7 +195,7 @@ class Decode {
         MsgHead curr_head_;                // 正在解析的消息的消息头
         std::deque<uint8_t> data_parsing_; // 当前正在解析的字节流
         std::queue<std::shared_ptr<MsgBody>> data_parsed_; // 已结解析完的数据
-        ParserStatus status_; // 当前的解析状态
+        ParserStatus status_;                              // 当前的解析状态
 
         // 初始化解析器状态
         void init();
