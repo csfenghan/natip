@@ -41,10 +41,10 @@ void NatIpClient::tcpInit() {
 }
 
 void NatIpClient::tcpClient() {
-        jdt::Encode encode;
         Json::Reader reader;
         Json::Value root;
         std::ifstream ifs;
+        jdt::Jdt jdt_manger;
 
         ifs.open("info.json", std::ifstream::in);
         if (!ifs.is_open())
@@ -52,22 +52,5 @@ void NatIpClient::tcpClient() {
         if (!reader.parse(ifs, root, true))
                 err_ret("can't parse info.json");
 
-        auto data_encode = encode.encode(root);
-        Rio_writen(socket_fd_, data_encode.first, data_encode.second);
-}
-
-void NatIpClient::echo() {
-        jdt::Encode encode;
-        Json::Reader reader;
-        Json::Value root;
-        std::ifstream ifs;
-
-        ifs.open("info.json", std::ifstream::in);
-        if (!ifs.is_open())
-                err_ret("can't open info.json");
-        if (!reader.parse(ifs, root, true))
-                err_ret("can't parse info.json");
-
-        auto data_encode = encode.encode(root);
-        Rio_writen(socket_fd_, data_encode.first, data_encode.second);
+        jdt_manger.sendMsg(root);
 }

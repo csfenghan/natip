@@ -14,8 +14,6 @@ class NatIpClient{
 
 		// 客户端
 		void tcpClient();
-
-		void echo();
 	private:
 		int socket_fd_;
 
