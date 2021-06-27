@@ -1,14 +1,28 @@
+#include "jdt_connection.hpp"
 #include "natip_server.hpp"
+#include "unistd.h"
 
-int main(int argc,char **argv){
-	NatIpServer server;
+int main(int argc, char **argv) {
+        natip::NatIpServer server;
+        jdt::Connection conn;
+        int pid;
 
-	// 1.加载配置
-	server.loadConfig("config.json");
+        server.loadConfig("config.json");
+        server.startListen();
 
-	// 2. 初始化
-	server.tcpInit();
+        // main loop
+        while (true) {
+                conn = server.acceptConnection();
+                if ((pid = fork()) < 0) {
+                        fprintf(stderr, "fork error,accept client failed!");
+                        conn.sendError("accept client failed!",
+                                       jdt::SERVER_SYSTEM_ERROR);
+                } else if (pid == 0) {
+                        server.stopListen();
 
-	// 3.服务器主循环
-	server.tcpServer();
+                        exit(0);
+                }
+
+                conn.closeConnection();
+        }
 }

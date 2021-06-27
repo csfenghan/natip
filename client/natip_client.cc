@@ -1,11 +1,17 @@
-#include "jdt.hpp"
+#include "jdt_connection.hpp"
 #include "jsoncpp/json/json.h"
 #include "natip_client.hpp"
 #include "unix_api.h"
 #include <fstream>
 #include <iostream>
 
-bool NatIpClient::loadConfig(std::string path) {
+namespace natip {
+
+// 构造函数
+NatIpClient::NatIpClient() {}
+
+// 从配置文件中加载配置
+void NatIpClient::setConfigure(std::string path) {
         Json::Value root, server;
         Json::Reader reader;
         std::ifstream in_file_stream;
@@ -20,54 +26,32 @@ bool NatIpClient::loadConfig(std::string path) {
 
         // 2.使用config文件进行配置
         if (!root.isMember("server"))
-                err_quit("can't found key: 'server' in config file %s", path.c_str());
+                err_quit("can't found key: 'server' in config file %s",
+                         path.c_str());
         server = root["server"];
 
         if (!server.isMember("addr"))
-                err_quit("can't found key: 'addr' in object 'server' in config file %s",
+                err_quit("can't found key: 'addr' in object 'server' in config "
+                         "file %s",
                          path.c_str());
         if (!server.isMember("port"))
-                err_quit("can't found key: 'port' in object 'server' in config file %s",
+                err_quit("can't found key: 'port' in object 'server' in config "
+                         "file %s",
                          path.c_str());
 
         server_addr_ = server["addr"].asString();
         server_port_ = server["port"].asString();
-
-        return true;
 }
 
-void NatIpClient::tcpInit() {
-        socket_fd_ = Open_clientfd(server_addr_.c_str(), server_port_.c_str());
+// 创建一个连接节点，返回一个jdt对象，可以直接和服务器通信
+jdt::Connection NatIpClient::createConnection() {
+        jdt::Connection node;
+        int socket_fd;
+
+        socket_fd = Open_clientfd(server_addr_.c_str(), server_port_.c_str());
+        node.setConnection(socket_fd);
+        close(socket_fd);
+        return node;
 }
 
-void NatIpClient::tcpClient() {
-        jdt::Encode encode;
-        Json::Reader reader;
-        Json::Value root;
-        std::ifstream ifs;
-
-        ifs.open("info.json", std::ifstream::in);
-        if (!ifs.is_open())
-                err_ret("can't open info.json");
-        if (!reader.parse(ifs, root, true))
-                err_ret("can't parse info.json");
-
-        auto data_encode = encode.encode(root);
-        Rio_writen(socket_fd_, data_encode.first, data_encode.second);
-}
-
-void NatIpClient::echo() {
-        jdt::Encode encode;
-        Json::Reader reader;
-        Json::Value root;
-        std::ifstream ifs;
-
-        ifs.open("info.json", std::ifstream::in);
-        if (!ifs.is_open())
-                err_ret("can't open info.json");
-        if (!reader.parse(ifs, root, true))
-                err_ret("can't parse info.json");
-
-        auto data_encode = encode.encode(root);
-        Rio_writen(socket_fd_, data_encode.first, data_encode.second);
-}
+} // namespace natip

@@ -1,6 +1,32 @@
-1. A连接S，S记录A的外网IP与通讯的端口
-2. B连接S
-3. S将A与此通讯的端口号返回给A
-4. S将A与此连接的IP与端口号返回给B
-5. A在程序中将服务绑定并侦听在从S返回的端口
-6. B使用从S返回的IP与端口连接A
+## 内网穿透
+在我的jetson、dell和工作台式机间实现内网穿透和数据通信的工具
+
+## 服务端安装
+### 安装依赖包
+
+    sudo apt install mysql-server libmysqlcppconn-dev libjsoncpp
+
+    然后配置MySQL，给予用户权限
+
+### 构建
+    git clone git@github.com:csfenghan/natip.git && cd natip
+    make server
+    cd server
+    ./Server
+
+
+## 客户端安装
+
+### 安装依赖
+
+    sudo apt install libjsoncpp
+
+### 构建
+
+    git clone git@github.com:csfenghan/natip.git && cd natip
+    make client
+    cd client
+    ./Client remote_server.json
+
+然后会出现要求的配置信息，以及可以连接的客户机的选项
+
