@@ -3,18 +3,37 @@
 
 namespace jdt {
 
-// 打开一个连接
-void Connection::setConnection(int fd) { dup2(fd, socket_fd_); }
+// open a connect
+void Connection::setConnection(int fd) {
+        dup2(fd, socket_fd_);
+        socklen_t len;
+        sockaddr_in addr;
+
+        if (getpeername(socket_fd_, (SA *)&addr, &len) == -1)
+                err_ret("getperrname() error");
+        addr_ = inet_ntoa(addr.sin_addr);
+        port_ = ntohs(addr.sin_port);
+}
 void Connection::openConnection(std::string hostname, std::string port) {
         socket_fd_ = Open_clientfd(hostname.c_str(), port.c_str());
 }
 
-// 关闭连接
+// close connect
 void Connection::closeConnection() { Close(socket_fd_); }
 
+// send file
+void Connection::sendData(std::string data) const {
+        Encode encode;
+        uint32_t len;
+        DetailType type;
+
+        type.data_type = STRING_DATA;
+        auto ptr = encode.encode(data, len, SEND_DATA, type);
+        Rio_writen(socket_fd_, ptr.get(), len);
+}
 #ifdef JSONCPP
-// 发送文件
-void Connection::sendData(Json::Value data) {
+// send file
+void Connection::sendData(Json::Value data) const {
         Encode encode;
         uint32_t len;
         DetailType type;
@@ -25,7 +44,7 @@ void Connection::sendData(Json::Value data) {
 }
 #endif
 
-// 发送一条命令，命令的内容是data
+// send a command
 void Connection::sendCmd(const std::string data, CmdType type) {
         Encode encode;
         uint32_t len;
@@ -36,7 +55,7 @@ void Connection::sendCmd(const std::string data, CmdType type) {
         Rio_writen(socket_fd_, ptr.get(), len);
 }
 
-// 发送一条错误消息
+// send error
 void Connection::sendError(const std::string data, ErrorType type) {
         Encode encode;
         uint32_t len;
@@ -47,7 +66,7 @@ void Connection::sendError(const std::string data, ErrorType type) {
         Rio_writen(socket_fd_, ptr.get(), len);
 }
 
-// 接收一条消息
+// receive a msg
 bool Connection::recvMsg(Value msg) {
         int n;
 
@@ -56,8 +75,7 @@ bool Connection::recvMsg(Value msg) {
                 if ((n = Rio_readn(socket_fd_, buf, HeadSize)) == 0)
                         break;
                 decode_.parse((uint8_t *)buf, n);
-                if ((n = Rio_readn(socket_fd_, buf,
-                                   decode_.getLenStillNeed())) == 0)
+                if ((n = Rio_readn(socket_fd_, buf, decode_.getLenStillNeed())) == 0)
                         break;
         }
         if (decode_.empty())

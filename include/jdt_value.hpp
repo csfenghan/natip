@@ -26,6 +26,7 @@ namespace jdt {
 // 消息被取出后的类型
 class Value : public Body {
       public:
+        Value() {}
         Value(std::shared_ptr<Body> data) : data_(data) {}
         // 判断service的类型，是file还是cmd还是error
         bool isData();
@@ -34,9 +35,12 @@ class Value : public Body {
         ServiceType getServiceType();
 
         // 1. data类型专属的操作
+	bool isStringData();
         bool isJsonData();
         bool isImageData();
         DataType getDataType();
+
+	std::string asStringData();
 
 #ifdef JSONCPP
         Json::Value asJson(); // 获取json标准数据

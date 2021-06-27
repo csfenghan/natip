@@ -13,30 +13,36 @@
 namespace jdt {
 class Connection {
       public:
-        // 打开连接
+        // open connect
         void setConnection(int fd);
         void openConnection(std::string hostname, std::string port);
 
-        // 关闭连接
+        // close connect
         void closeConnection();
 
-        void sendData(std::string data);
+        void sendData(std::string data) const;
 #ifdef JSONCPP
-        void sendData(Json::Value data);
+        void sendData(Json::Value data) const;
 #endif
 
-        // 发送一条命令，命令的内容是data数据
+        // send a command
         void sendCmd(const std::string data, CmdType type);
 
-        // 发送一条错误消息
+        // send a error
         void sendError(const std::string data, ErrorType type);
 
-        // 接收一条消息
+        // receive a msg
         bool recvMsg(Value msg);
 
+        // get addr
+        std::string getAddr() { return addr_; }
+        int getPort() { return port_; }
+
       private:
-        int socket_fd_; // 通信套接字
-        Decode decode_; // 数据解析器
+        int socket_fd_;    // 通信套接字
+        std::string addr_; // 对面的地址
+        int port_; // 对面的端口
+        Decode decode_;    // 数据解析器
 };
 
 } // namespace jdt
