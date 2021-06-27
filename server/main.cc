@@ -2,6 +2,7 @@
 #include "jdt_connection.hpp"
 #include "natip_server.hpp"
 #include <unistd.h>
+#include <vector>
 
 // setting user information
 void set_client_information(jdt::Connection &conn) {
@@ -22,6 +23,23 @@ void set_client_information(jdt::Connection &conn) {
         natip::write_to_mysql(client_data);
 }
 
+// penetration based on user selection
+void penetration(jdt::Connection &conn) {
+        std::vector<natip::ClientData> data;
+        char buf[1024];
+
+        conn.sendString("current hostname that can connect:\n");
+        natip::read_from_mysql(data);
+        for (int i = 0; i < data.size(); i++) {
+                sprintf(buf, "host %d\n", i);
+                conn.sendString(buf);
+                conn.sendString("\t" + data[i].getName() + "\n");
+                std::cout << data[i].getInfo() << std::endl;
+                conn.sendString("\t" + data[i].getInfo() + "\n");
+        }
+        conn.sendCmd("final\n", jdt::STRING_MASSAGE);
+}
+
 int main(int argc, char **argv) {
         natip::NatIpServer server;
         jdt::Connection conn;
@@ -40,6 +58,7 @@ int main(int argc, char **argv) {
                         server.stopListen();
 
                         set_client_information(conn);
+                        penetration(conn);
 
                         exit(0);
                 }

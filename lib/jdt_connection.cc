@@ -23,7 +23,7 @@ void Connection::openConnection(std::string hostname, std::string port) {
 void Connection::closeConnection() { Close(socket_fd_); }
 
 // send file
-void Connection::sendData(std::string data) const {
+void Connection::sendString(std::string data) const {
         Encode encode;
         uint32_t len;
         DetailType type;
@@ -81,7 +81,7 @@ bool Connection::recvMsg(Value &msg) {
                 decode_.parse((uint8_t *)buf, n);
         }
         if (decode_.empty()) {
-                fprintf(stderr, "decode error\n");
+                fprintf(stderr, "decode error,decocde_ is empty\n");
                 return false;
         }
         msg = decode_.front();

@@ -3,17 +3,18 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace natip {
 // 用户信息的数据类型
 class ClientData {
       public:
+        ClientData() {}
         // 打印数据
         void printClientData();
 
         // 设置所有的数据
-        void setAllData(std::string name, std::string addr, int port, int pid,
-                        std::string info);
+        void setAllData(std::string name, std::string addr, int port, int pid, std::string info);
         // 读取数据
         std::string getName();
         std::string getAddr();
@@ -44,6 +45,7 @@ bool write_to_mysql(ClientData &data);
 
 // 从数据库总读取对应name的数据
 bool read_from_mysql(ClientData &data, std::string name);
+bool read_from_mysql(std::vector<ClientData> &data);
 
 // 从数据库总读取对应pid的数据
 bool read_from_mysql(ClientData &data, int pid);
@@ -53,6 +55,7 @@ bool del_from_mysql(std::string name);
 
 // 从数据库中删除对应pid的数据
 bool del_from_mysql(int pid);
+
 } // namespace natip
 
 #endif

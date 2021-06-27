@@ -37,7 +37,7 @@ enum ErrorType {
 
 // 一个存放具体消息格式的union，四个参数只用一个字节
 union DetailType {
-        uint8_t value; // 用于给union赋值和获取union值
+        uint32_t value; // 用于给union赋值和获取union值
         DataType data_type;
         CmdType cmd_type;
         ErrorType error_type;

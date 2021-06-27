@@ -20,7 +20,7 @@ class Connection {
         // close connect
         void closeConnection();
 
-        void sendData(std::string data) const;
+        void sendString(std::string data) const;
 #ifdef JSONCPP
         void sendData(Json::Value data) const;
 #endif

@@ -15,7 +15,8 @@
 
 namespace natip {
 
-NatIpServer::NatIpServer() { Signal(SIGCHLD, sigchldHandler); }
+NatIpServer::NatIpServer() { //Signal(SIGCHLD, sigchldHandler); }
+}
 
 NatIpServer::~NatIpServer() {}
 

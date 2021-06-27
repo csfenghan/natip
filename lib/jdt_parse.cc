@@ -217,6 +217,9 @@ bool Decode::parseBody() {
                         throw parse_error("Error:not support image type "
                                           "currently,parseBody() error!",
                                           __FILE__, __LINE__, __FUNCTION__);
+                } else {
+                        throw parse_error("Error:parseBody() error,can't recognize format! ",
+                                          __FILE__, __LINE__, __FUNCTION__);
                 }
         } else if (curr_head_.service_type == SEND_CMD) {
                 data = parseString();
