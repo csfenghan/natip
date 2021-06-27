@@ -6,7 +6,9 @@
 #include "cppconn/exception.h"
 #include "cppconn/resultset.h"
 #include "cppconn/statement.h"
+#ifdef JSONCPP
 #include "jsoncpp/json/json.h"
+#endif
 #include "mysql_connection.h"
 
 #include <fstream>
@@ -64,9 +66,8 @@ jdt::Connection NatIpServer::acceptConnection() {
                 else
                         err_sys("accept error");
         }
-
         conn.setConnection(connfd);
-        close(connfd);
+	close(connfd);
 
         return conn;
 }

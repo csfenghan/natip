@@ -1,5 +1,7 @@
 #include "jdt_connection.hpp"
+#ifdef JSONCPP
 #include "jsoncpp/json/json.h"
+#endif
 #include "natip_client.hpp"
 #include "unix_api.h"
 #include <fstream>
@@ -50,7 +52,6 @@ jdt::Connection NatIpClient::createConnection() {
 
         socket_fd = Open_clientfd(server_addr_.c_str(), server_port_.c_str());
         node.setConnection(socket_fd);
-        close(socket_fd);
         return node;
 }
 

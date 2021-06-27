@@ -73,7 +73,7 @@ static bool manageMySQL(ServiceType service, ClientData &data,
         try {
                 // 初始化连接
                 driver = get_driver_instance();
-                con = driver->connect("127.0.0.1:3306", "fenghan", "");
+                con = driver->connect("127.0.0.1:3306", "root", "");
                 con->setSchema("natip");
                 stmt = con->createStatement();
 

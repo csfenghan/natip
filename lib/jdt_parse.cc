@@ -9,16 +9,15 @@ namespace jdt {
  * description:encode the data to be sent
  *********************************************************************************************/
 // encode string data
-std::shared_ptr<uint8_t> Encode::encode(std::string data, uint32_t &len,
-                                        ServiceType service, DetailType type) {
+std::shared_ptr<uint8_t> Encode::encode(std::string data, uint32_t &len, ServiceType service,
+                                        DetailType type) {
         uint8_t *ptr;
 
         len = HeadSize + data.size();
-        std::shared_ptr<uint8_t> result(new uint8_t[len],
-                                        [](uint8_t *p) { delete p; });
+        std::shared_ptr<uint8_t> result(new uint8_t[len], [](uint8_t *p) { delete p; });
         // encode head
         ptr = result.get();
-        encode(ptr, len, service, type);
+        encodeHead(ptr, len, service, type);
 
         // encode body
         ptr += HeadSize;
@@ -30,7 +29,7 @@ std::shared_ptr<uint8_t> Encode::encode(std::string data, uint32_t &len,
 #ifdef JSONCPP
 // encode json data
 std::shared_ptr<uint8_t> Encode::encode(Json::Value data, uint32_t &len,
-                                        ServiceType service, DetailType type) {
+                                       ServiceType service, DetailType type) {
         uint8_t *ptr;
         Json::FastWriter fwriter;
         std::string body;
@@ -58,8 +57,7 @@ std::shared_ptr<uint8_t> Encode::encode(Json::Value data, uint32_t &len,
 #endif
 
 // encode head data
-void Encode::encodeHead(uint8_t *ptr, uint32_t len, ServiceType service,
-                        DetailType type) {
+void Encode::encodeHead(uint8_t *ptr, uint32_t len, ServiceType service, DetailType type) {
         // set the service type
         *(uint8_t *)ptr = (uint8_t)service;
         ptr += 1;
@@ -103,8 +101,7 @@ bool Decode::parse(uint8_t *data, uint32_t len) {
                 // parse data
                 while (!data_parsing_.empty()) {
                         // parse head
-                        if (status_ == PARSING_INIT ||
-                            status_ == PARSING_HEAD) {
+                        if (status_ == PARSING_INIT || status_ == PARSING_HEAD) {
                                 if (!parseHead()) {
                                         return false;
                                 }
@@ -120,10 +117,8 @@ bool Decode::parse(uint8_t *data, uint32_t len) {
                         }
                 }
         } catch (parse_error &e) {
-                fprintf(stderr,
-                        "Error: file: %s, line: %d, function:%s\ndetail: %s\n",
-                        e.getFile().data(), e.getLine(), e.getFile().data(),
-                        e.what());
+                fprintf(stderr, "Error: file: %s, line: %d, function:%s\ndetail: %s\n",
+                        e.getFile().data(), e.getLine(), e.getFile().data(), e.what());
                 return false;
         }
 
@@ -144,9 +139,7 @@ Value Decode::front() { return Value(data_parsed_.front()); }
 void Decode::pop() { data_parsed_.pop(); }
 
 // hot many byters are needed for the message currently being parsed
-uint32_t Decode::getLenStillNeed() const {
-        return curr_head_.len - data_parsing_.size();
-}
+uint32_t Decode::getLenStillNeed() const { return curr_head_.len - data_parsing_.size(); }
 
 // function:parse head
 // description:parse the data saved in data_parsing_,and if success,set
@@ -171,8 +164,8 @@ bool Decode::parseHead() {
                 curr_head_.service_type = SEND_ERROR;
                 break;
         default:
-                throw parse_error("Error:parseHead() error,unknow service type",
-                                  __FILE__, __LINE__, __FUNCTION__);
+                throw parse_error("Error:parseHead() error,unknow service type", __FILE__, __LINE__,
+                                  __FUNCTION__);
                 break;
         }
         ptr += 1;
@@ -212,9 +205,9 @@ bool Decode::parseBody() {
         if (curr_head_.service_type == SEND_DATA) {
                 if (curr_head_.detail_type.data_type == JSON_DATA) {
 #ifndef JSONCPP
-                        throw format_error(
-                            "Error:parseBody() error,not found jsoncpp "
-                            "library,can't parse json file!");
+                        throw parse_error("Error:parseBody() error,not found jsoncpp "
+                                          "library,can't parse json file!",
+                                          __FILE__, __LINE__, __FUNCTION__);
 #endif
 #ifdef JSONCPP
                         data = parseJson();
@@ -231,8 +224,7 @@ bool Decode::parseBody() {
         }
 
         // clean up the parsed parts of data_parsing_
-        data_parsing_.erase(data_parsing_.begin(),
-                            data_parsing_.begin() + curr_head_.len);
+        data_parsing_.erase(data_parsing_.begin(), data_parsing_.begin() + curr_head_.len);
         memset(&curr_head_, 0, sizeof(curr_head_));
 
         return true;
@@ -243,8 +235,8 @@ std::shared_ptr<Body> Decode::parseString() {
         auto data = std::make_shared<ExtendBody<std::string>>();
 
         data->setHead(curr_head_);
-        data->setData(std::string(data_parsing_.begin() + HeadSize,
-                                  data_parsing_.begin() + curr_head_.len));
+        data->setData(
+            std::string(data_parsing_.begin() + HeadSize, data_parsing_.begin() + curr_head_.len));
 
         return data;
 }
@@ -260,8 +252,7 @@ std::shared_ptr<Body> Decode::parseJson() {
         // parse the json data
         ptr = (char *)&data_parsing_[0];
         if (!reader.parse(ptr + HeadSize, ptr + curr_head_.len, value, true)) {
-                throw parse_error("json data parse error!", __FILE__, __LINE__,
-                                  __FUNCTION__);
+                throw parse_error("json data parse error!", __FILE__, __LINE__, __FUNCTION__);
         }
 
         // set the head

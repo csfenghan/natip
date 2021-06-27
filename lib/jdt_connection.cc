@@ -5,9 +5,10 @@ namespace jdt {
 
 // open a connect
 void Connection::setConnection(int fd) {
-        dup2(fd, socket_fd_);
         socklen_t len;
         sockaddr_in addr;
+
+        socket_fd_ = dup(fd);
 
         if (getpeername(socket_fd_, (SA *)&addr, &len) == -1)
                 err_ret("getperrname() error");
@@ -52,6 +53,7 @@ void Connection::sendCmd(const std::string data, CmdType type) {
         DetailType dt;
         dt.cmd_type = type;
         auto ptr = encode.encode(data, len, SEND_CMD, dt);
+        printf("service:%d,type:%d\n", *(uint8_t *)ptr.get(), *(uint8_t *)(ptr.get() + 1));
         Rio_writen(socket_fd_, ptr.get(), len);
 }
 

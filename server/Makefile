@@ -2,8 +2,8 @@ include ../makefile.define
 
 CXX=g++
 LD=g++
-CC_FLAGS:=-g -I $(INC_PATH) -DJSONCPP
-LD_FLAGS:= -ljsoncpp -ljdt -lpthread -L $(LIB_PATH) -lmysqlcppconn
+CC_FLAGS:=-g -I $(INC_PATH)  -DJSONCPP
+LD_FLAGS:= -ljdt -lpthread -L $(LIB_PATH) -lmysqlcppconn -ljsoncpp
 
 SRC_FILES:=main.cc \
 	./natip_server.cc \

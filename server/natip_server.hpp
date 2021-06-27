@@ -1,7 +1,9 @@
 #ifndef NATIP_SERVER_HPP
 #define NATIP_SERVER_HPP
 
+#ifdef JSONCPP
 #include "jsoncpp/json/json.h"
+#endif
 #include "jdt_connection.hpp"
 
 #include <string>

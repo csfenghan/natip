@@ -21,19 +21,18 @@ namespace jdt {
 class Encode {
       public:
         // encode string data
-        std::shared_ptr<uint8_t> encode(std::string data, uint32_t &len,
-                                        ServiceType service, DetailType type);
+        std::shared_ptr<uint8_t> encode(std::string data, uint32_t &len, ServiceType service,
+                                        DetailType type);
 
 #ifdef JSONCPP
         // encode json data
-        std::shared_ptr<uint8_t> encode(Json::Value data, uint32_t &len,
-                                        ServiceType service, DetailType type);
+        std::shared_ptr<uint8_t> encode(Json::Value data, uint32_t &len, ServiceType service,
+                                        DetailType type);
 #endif
 
       private:
         // encode head data
-        void encodeHead(uint8_t *ptr, uint32_t len, ServiceType service,
-                        DetailType type);
+        void encodeHead(uint8_t *ptr, uint32_t len, ServiceType service, DetailType type);
 };
 
 /***********************************************************************************************
@@ -69,10 +68,10 @@ class Decode {
         uint32_t getLenStillNeed() const;
 
       private:
-        Head curr_head_; // message header for the data currently being parsed
+        Head curr_head_;                   // message header for the data currently being parsed
         std::deque<uint8_t> data_parsing_; // data currently being parsed
         std::queue<std::shared_ptr<Body>> data_parsed_; // parsed data
-        ParserStatus status_; // current parsing status
+        ParserStatus status_;                           // current parsing status
 
         // initialize
         void init();
