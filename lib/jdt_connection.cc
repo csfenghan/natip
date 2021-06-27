@@ -68,7 +68,7 @@ void Connection::sendError(const std::string data, ErrorType type) {
 }
 
 // receive a msg
-bool Connection::recvMsg(Value msg) {
+bool Connection::recvMsg(Value &msg) {
         int n;
 
         char buf[MAXLINE];

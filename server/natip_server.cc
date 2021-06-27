@@ -85,7 +85,7 @@ void NatIpServer::sigchldHandler(int sig) {
                                          "for pid: ");
                         sio_putl(pid);
                 } else {
-                        sio_puts((char *)"Successfully remove a client");
+                        sio_puts((char *)"Successfully remove a client\n");
                 }
         }
 

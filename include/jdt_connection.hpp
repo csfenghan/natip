@@ -32,7 +32,7 @@ class Connection {
         void sendError(const std::string data, ErrorType type);
 
         // receive a msg
-        bool recvMsg(Value msg);
+        bool recvMsg(Value &msg);
 
         // get addr
         std::string getAddr() { return addr_; }

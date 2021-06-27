@@ -202,7 +202,9 @@ bool Decode::parseBody() {
 
         // parse body by service type
         if (curr_head_.service_type == SEND_DATA) {
-                if (curr_head_.detail_type.data_type == JSON_DATA) {
+                if (curr_head_.detail_type.data_type == STRING_DATA) {
+                        data = parseString();
+                } else if (curr_head_.detail_type.data_type == JSON_DATA) {
 #ifndef JSONCPP
                         throw parse_error("Error:parseBody() error,not found jsoncpp "
                                           "library,can't parse json file!",
