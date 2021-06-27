@@ -11,18 +11,11 @@ void set_client_information(jdt::Connection &conn) {
         conn.sendCmd("please input your host name: ", jdt::STRING_MASSAGE);
         conn.recvMsg(msg);
         client_data.setName(msg.asStringData());
-        conn.sendCmd("Do you have any other information to enter? y/n", jdt::STRING_MASSAGE);
+
+        conn.sendCmd("input other info:", jdt::STRING_MASSAGE);
         conn.recvMsg(msg);
-        std::string info = msg.asStringData();
-        if (info != std::string("y") || info != std::string("n")) {
-                conn.sendError("input error,connect will disconnect", jdt::FORMAT_ERROR);
-                exit(0);
-        }
-        if (info == std::string("y")) {
-                conn.sendCmd("input other info:", jdt::STRING_MASSAGE);
-                conn.recvMsg(msg);
-                client_data.setInfo(msg.asStringData());
-        }
+        client_data.setInfo(msg.asStringData());
+
         client_data.setAddr(conn.getAddr());
         client_data.setPort(conn.getPort());
         client_data.setPid(getpid());
