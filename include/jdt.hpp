@@ -22,24 +22,25 @@
 
 namespace jdt {
 
-/***************************************
- *	一、 消息体参数
- **************************************/
+/******************************************************************************
+ * 消息的内容
+ *****************************************************************************/
 // 1.协议头以及其用到的参数
 // (1) 头部大小
 #define HEAD_SIZE 8 // 头部大小8字节
 
 // (2) 服务的类型
 #define SERVICE_SEND 1 //发送
-#define SERVICE_REQ 2  //申请接收
+#define SERVICE_RES 2  //申请接收
 
 // (3) 数据的类型
 #define TYPE_UNDEFINE 0 // 未定义类型
 #define TYPE_JSON 1     // json数据
 #define TYPE_IMAGE 2    // image数据
 #define TYPE_STRING 3   // string数据
+#define TYPE_ERROR 4    // 表示发送的数据格式错误
 
-// (3)协议头数据格式(实际上用不到，只是规范数据的格式，数据分别以magic、version、service、data_len顺序存放)
+// (3)协议头数据格式(规范数据的格式，数据分别以magic、version、service、data_len顺序存放)
 struct MsgHead {
         uint8_t service; // 服务的类型(1字节)
         uint8_t type;    // 数据的类型(1字节)
@@ -54,15 +55,28 @@ class MsgBody {
         MsgBody() : type_(TYPE_UNDEFINE), valid_(false) {}
         ~MsgBody() {}
 
+        // 获取服务类型
+        int getService() const { return service_; }
+
         // 获取数据类型
-        int getType() { return type_; }
+        int getType() const { return type_; }
 
         // 数据是否有效
-        bool isValid() { return valid_; }
+        bool isValid() const { return valid_; }
 
-      protected:
-        int type_;   // 数据的类型
-        bool valid_; // 数据是否有效（可能发生损坏、丢失等导致）
+        // 设置服务类型
+        void setService(int service) { service_ = service; }
+
+        // 设置type
+        void setType(int type) { type_ = type; }
+
+        // 设置有效性
+        void setValid(bool is_valid) { valid_ = is_valid; }
+
+      private:
+        int service_; //服务类型
+        int type_;    // 数据的类型
+        bool valid_;  // 数据是否有效（可能发生损坏、丢失等导致）
 };
 
 // 存放不同类型数据的类，负责写入数据的具体内容及其有效性
@@ -75,21 +89,41 @@ template <typename T> class ExtendMsgBody : public MsgBody {
         void setData(const T &data) { data_ = data; }
 
         // 读取数据
-        T getData() { return data_; }
-
-        // 设置type
-        void setType(int type) { type_ = type; }
-
-        // 设置有效性
-        void setValid(bool is_valid) { valid_ = is_valid; }
+        const T getData() const { return data_; }
 
       private:
         T data_;
 };
 
-/***************************************
- *	二、Encode
- **************************************/
+// 通用的数据类型
+class Msg {
+      public:
+        Msg() {}
+        Msg(const std::shared_ptr<MsgBody> &ptr) : data_(ptr) {}
+
+        // 查看是否是string类型
+        bool isString() const { return data_->getType() == TYPE_STRING; }
+#ifdef JSONCPP
+        // 查看是否是json类型
+        bool isJson() const { return data_->getType() == TYPE_JSON; }
+#endif
+        bool isError() const { return data_->getType() == TYPE_ERROR; }
+
+        // 以string类型获取数据
+        const std::string asString() const;
+#ifdef JSONCPP
+        const Json::Value asJson() const;
+#endif
+        const std::string asError() const;
+
+      private:
+        std::shared_ptr<MsgBody> data_;
+};
+
+/**********************************************************************************************
+ * class:Encode
+ * description:负责打包要发送的数据
+ *********************************************************************************************/
 class Encode {
       public:
         // 功能：编码string数据
@@ -103,8 +137,6 @@ class Encode {
 
         // opencv image文件传输（需要有opencv库）
 #ifdef OPENCV
-        //       std::pair<uint8_t *, uint32_t> encode(const cv::Mat &img);
-
 #endif
         // 销毁new的资源
         void release(const std::pair<uint8_t *, uint32_t> &data);
@@ -113,9 +145,10 @@ class Encode {
         void encodeHead(uint8_t *ptr, int service, int type, int len);
 };
 
-/***************************************
- *	三、Decode
- **************************************/
+/***********************************************************************************************
+ * class:Decode
+ * description:负责解析收到的数据,数据存放在一个队列中，可以通过getOneMsg接口获取一个已解析的消息
+ **********************************************************************************************/
 class Decode {
         enum ParserStatus {
                 PARSING_INIT = 1, // 协议初始化
@@ -124,45 +157,31 @@ class Decode {
         };
 
       public:
-        Decode() { init(); }
+        Decode();
 
         // 功能：解析收到的数据流
         // 描述：解析以data开头，长度为len的字节流。解析后的数据保存在data_parsed_中
         // 返回：如果长度len的字节流被全部解析，则返回true，否则返回false
         bool parse(uint8_t *data, uint32_t len);
 
-        // 判断要取出的消息的类型
-        bool nextIsString();
-        bool nextIsJson();
-        bool nextIsImage();
-
-	int nextType();
-
-        // 按照对应的类型获取消息
-        std::string getString();
-        std::string popString();
-#ifdef JSONCPP
-        Json::Value getJson();
-        Json::Value popJson();
-#endif
-#ifdef OPENCV
-
-#endif
-
         // 查看是否为空
         bool empty();
 
-        // 释放一个消息
-        void pop();
-
         // 查看当前的消息长度
         size_t size();
+
+        // 说明：获取一个消息
+        // 描述：如果is_release为ture，则获取一个Msg的同时Decode对象会释放掉这个Msg的信息
+        const Msg getOneMsg(bool is_release = false);
+
+        // 释放一个消息
+        void releaseOneMsg();
 
       private:
         MsgHead curr_head_;                // 正在解析的消息的消息头
         std::deque<uint8_t> data_parsing_; // 当前正在解析的字节流
         std::queue<std::shared_ptr<MsgBody>> data_parsed_; // 已结解析完的数据
-        ParserStatus status_;                            // 当前的解析状态
+        ParserStatus status_;                              // 当前的解析状态
 
         // 初始化解析器状态
         void init();
@@ -190,5 +209,36 @@ class Decode {
         std::shared_ptr<MsgBody> parseString();
 };
 
+/***************************************************************************************
+ * class：Jdt
+ * description：如果使用Jdt发送接收数据，则套接字接口将完全由Jdt管理，不要在其他位置使用此套接字接口
+ **************************************************************************************/
+class Jdt {
+      public:
+        Jdt() : socket_fd_(-1) {}
+        Jdt(int fd) : socket_fd_(fd) {}
+
+        // 设置socket
+        void setFd(int fd);
+
+        // 对协议的封装，负责发送消息
+        void sendMsg(const std::string &data);
+
+#ifdef JSONCPP
+        void sendMsg(const Json::Value &data);
+#endif
+
+        // 对协议的封装，负责接收消息
+        const Msg recvMsg();
+
+        // 释放资源
+        void release();
+
+      private:
+        bool isInit() const;
+
+        Decode decode_;
+        int socket_fd_;
+};
 } // namespace jdt
 #endif

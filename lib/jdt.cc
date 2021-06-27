@@ -1,5 +1,6 @@
 #include "jdt.hpp"
 #include "jsoncpp/json/json.h"
+#include "unix_api.h"
 
 #include <arpa/inet.h>
 #include <string.h>
@@ -10,6 +11,34 @@ namespace jdt {
 /***************************************
  *	MsgBody实现
  **************************************/
+// 以string类型获取数据
+const std::string Msg::asString() const {
+        if (!isString())
+                err_ret("this data is not string format!");
+        ExtendMsgBody<std::string> *ptr;
+
+        ptr = (ExtendMsgBody<std::string> *)data_.get();
+        return ptr->getData();
+}
+#ifdef JSONCPP
+const Json::Value Msg::asJson() const {
+        if (!isJson())
+                err_ret("this data is not json format!");
+        ExtendMsgBody<Json::Value> *ptr;
+
+        ptr = (ExtendMsgBody<Json::Value> *)data_.get();
+        return ptr->getData();
+}
+#endif
+const std::string Msg::asError() const {
+        if (!isError())
+                err_ret("this msg is not error data!");
+
+        ExtendMsgBody<std::string> *ptr;
+
+        ptr = (ExtendMsgBody<std::string> *)data_.get();
+        return ptr->getData();
+}
 
 /***************************************
  *	JdtEncode实现
@@ -79,12 +108,11 @@ void Encode::encodeHead(uint8_t *ptr, int service, int type, int len) {
 /***************************************
  *	JdtDecode实现
  **************************************/
+// 构造函数
+Decode::Decode() { init(); }
 
 // 初始化解析状态
 void Decode::init() { status_ = PARSING_INIT; }
-
-// 释放一个消息
-void Decode::pop() { data_parsed_.pop(); }
 
 // 查看是否为空
 bool Decode::empty() { return data_parsed_.empty(); }
@@ -92,50 +120,17 @@ bool Decode::empty() { return data_parsed_.empty(); }
 // 查看当前的消息长度
 size_t Decode::size() { return data_parsed_.size(); }
 
-// 判断消息的格式
-bool Decode::nextIsString() {
-        if (empty())
-                return false;
-        return data_parsed_.front()->getType() == TYPE_STRING;
-}
+// 获取一个消息
+const Msg Decode::getOneMsg(bool is_release) {
+        Msg result(data_parsed_.front());
 
-bool Decode::nextIsJson() {
-        if (empty())
-                return false;
-        return data_parsed_.front()->getType() == TYPE_JSON;
-}
-
-int Decode::nextType() { return data_parsed_.front()->getType(); }
-
-// 获取指定格式的数据
-std::string Decode::getString() {
-        ExtendMsgBody<std::string> *ptr;
-
-        ptr = (ExtendMsgBody<std::string> *)data_parsed_.front().get();
-        return ptr->getData();
-}
-
-std::string Decode::popString() {
-        std::string result = getString();
-        pop();
+        if (is_release)
+                releaseOneMsg();
         return result;
 }
 
-#ifdef JSONCPP
-Json::Value Decode::getJson() {
-        ExtendMsgBody<Json::Value> *ptr;
-
-        ptr = (ExtendMsgBody<Json::Value> *)data_parsed_.front().get();
-        return ptr->getData();
-}
-
-Json::Value Decode::popJson() {
-        auto result = getJson();
-        pop();
-        return result;
-}
-
-#endif
+// 释放一个消息
+void Decode::releaseOneMsg() { data_parsed_.pop(); }
 
 // 功能：解析收到的数据流
 // 描述：解析以data开头，长度为len的字节流。解析后的数据保存在data_parsed_中
@@ -206,8 +201,8 @@ bool Decode::parseBody() {
                 msg = parseJson();
                 break;
 #endif
-                fprintf(stderr,
-                        "can't recognize the type JSONCPP,you need jsoncpp library\n");
+                fprintf(stderr, "can't recognize the type JSONCPP,you need "
+                                "jsoncpp library\n");
                 is_error = true;
                 break;
 
@@ -286,6 +281,62 @@ std::shared_ptr<MsgBody> Decode::parseString() {
         msg->setType(TYPE_STRING);
 
         return msg;
+}
+
+/***************************************
+ *	Jdt实现
+ **************************************/
+void Jdt::setFd(int fd) {
+        // 先关闭之前的描述符
+        if (!isInit())
+                close(socket_fd_);
+        socket_fd_ = fd;
+}
+
+void Jdt::sendMsg(const std::string &data) {
+        if (!isInit())
+                err_sys("can't use uninitialized fd");
+        Encode encode;
+
+        auto data_encoded = encode.encode(data);
+        Rio_writen(socket_fd_, data_encoded.first, data_encoded.second);
+}
+
+#ifdef JSONCPP
+void Jdt::sendMsg(const Json::Value &data) {
+        if (!isInit())
+                err_sys("can't use uninitialized fd");
+        Encode encode;
+
+        auto data_encoded = encode.encode(data);
+        Rio_writen(socket_fd_, data_encoded.first, data_encoded.second);
+}
+#endif
+
+const Msg Jdt::recvMsg() {
+        if (!isInit())
+                err_sys("can't use uninitialized fd");
+        char buf[MAXLINE];
+        int n;
+
+        while (decode_.empty()) {
+                n = Rio_readn(socket_fd_, buf, MAXLINE);
+                decode_.parse((uint8_t *)buf, n);
+        }
+        if (decode_.empty())
+                return Msg();
+        return Msg(decode_.getOneMsg(true));
+}
+
+void Jdt::release() {
+        if (isInit())
+                close(socket_fd_);
+}
+
+bool Jdt::isInit() const {
+        if (socket_fd_ == -1)
+                return false;
+        return true;
 }
 
 } // namespace jdt

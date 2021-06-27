@@ -33,8 +33,7 @@ void NatIpServer::loadConfig(std::string path) {
 
         // configure
         if (!root.isMember("server"))
-                err_quit("can't found key: 'server' in config file %s",
-                         path.c_str());
+                err_quit("can't found key: 'server' in config file %s", path.c_str());
         server = root["server"];
 
         if (!server.isMember("listen_port"))
@@ -71,41 +70,6 @@ jdt::Connection NatIpServer::acceptConnection() {
 
         return conn;
 }
-/*
-// 服务器主循环
-void NatIpServer::tcpLoop() {
-        int connfd;
-        pid_t pid;
-        socklen_t client_len;
-        struct sockaddr_storage client_addr;
-
-        // bind并listen
-        listen_fd_ = Open_listenfd(listen_port_.c_str());
-
-        while (true) {
-                // accept连接，并处理被信号中断的情况
-                client_len = sizeof(client_addr);
-                if ((connfd = accept(listen_fd_, (SA *)&client_addr,
-                                     &client_len)) < 0) {
-                        if (errno == EINTR)
-                                continue;
-                        else
-                                err_sys("accept error");
-                }
-
-                // 子进程处理服务
-                if ((pid = Fork()) == 0) {
-                        close(listen_fd_);
-
-                        // 根据客户端发来的消息配置用户信息
-
-                        exit(0);
-                }
-                close(connfd);
-        }
-}
-*/
-
 // chld信号处理函数
 void NatIpServer::sigchldHandler(int sig) {
         int old_errno;
