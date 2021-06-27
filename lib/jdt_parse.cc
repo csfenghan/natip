@@ -28,8 +28,8 @@ std::shared_ptr<uint8_t> Encode::encode(std::string data, uint32_t &len, Service
 
 #ifdef JSONCPP
 // encode json data
-std::shared_ptr<uint8_t> Encode::encode(Json::Value data, uint32_t &len,
-                                       ServiceType service, DetailType type) {
+std::shared_ptr<uint8_t> Encode::encode(Json::Value data, uint32_t &len, ServiceType service,
+                                        DetailType type) {
         uint8_t *ptr;
         Json::FastWriter fwriter;
         std::string body;
@@ -40,8 +40,7 @@ std::shared_ptr<uint8_t> Encode::encode(Json::Value data, uint32_t &len,
         // allocate memory
         len = HeadSize + body.size();
 
-        std::shared_ptr<uint8_t> result(new uint8_t[len],
-                                        [](uint8_t *p) { delete p; });
+        std::shared_ptr<uint8_t> result(new uint8_t[len], [](uint8_t *p) { delete p; });
 
         // encode head
         ptr = result.get();
@@ -224,6 +223,7 @@ bool Decode::parseBody() {
         }
 
         // clean up the parsed parts of data_parsing_
+        data_parsed_.push(data);
         data_parsing_.erase(data_parsing_.begin(), data_parsing_.begin() + curr_head_.len);
         memset(&curr_head_, 0, sizeof(curr_head_));
 

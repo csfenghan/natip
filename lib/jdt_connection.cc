@@ -53,7 +53,6 @@ void Connection::sendCmd(const std::string data, CmdType type) {
         DetailType dt;
         dt.cmd_type = type;
         auto ptr = encode.encode(data, len, SEND_CMD, dt);
-        printf("service:%d,type:%d\n", *(uint8_t *)ptr.get(), *(uint8_t *)(ptr.get() + 1));
         Rio_writen(socket_fd_, ptr.get(), len);
 }
 
@@ -79,9 +78,12 @@ bool Connection::recvMsg(Value msg) {
                 decode_.parse((uint8_t *)buf, n);
                 if ((n = Rio_readn(socket_fd_, buf, decode_.getLenStillNeed())) == 0)
                         break;
+                decode_.parse((uint8_t *)buf, n);
         }
-        if (decode_.empty())
+        if (decode_.empty()) {
+                fprintf(stderr, "decode error\n");
                 return false;
+        }
         msg = decode_.front();
         decode_.pop();
         return true;
