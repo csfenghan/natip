@@ -26,9 +26,11 @@ void set_client_information(jdt::Connection &conn) {
 // penetration based on user selection
 void penetration(jdt::Connection &conn) {
         std::vector<natip::ClientData> data;
+        natip::ClientData client_data;
+        jdt::Value msg;
         char buf[1024];
 
-	// send the host that can connect
+        // send the host that can connect
         conn.sendString("current hostname that can connect:\n");
         natip::read_from_mysql(data);
         for (int i = 0; i < data.size(); i++) {
@@ -37,7 +39,14 @@ void penetration(jdt::Connection &conn) {
                 conn.sendString("\tname: " + data[i].getName());
                 conn.sendString("\tinfo: " + data[i].getInfo());
         }
-        conn.sendCmd("final\n", jdt::STRING_MASSAGE);
+        conn.sendCmd("please input the hsot that you want to connect:", jdt::STRING_MASSAGE);
+        conn.recvMsg(msg);
+        if (!natip::read_from_mysql(client_data, msg.asStringData())) {
+                conn.sendError("not found name:" + msg.asStringData(), jdt::FORMAT_ERROR);
+                exit(0);
+        }
+        conn.sendString(client_data.getAddr());
+        conn.sendString(std::to_string(client_data.getPort()));
 }
 
 int main(int argc, char **argv) {
