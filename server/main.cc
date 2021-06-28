@@ -28,14 +28,14 @@ void penetration(jdt::Connection &conn) {
         std::vector<natip::ClientData> data;
         char buf[1024];
 
+	// send the host that can connect
         conn.sendString("current hostname that can connect:\n");
         natip::read_from_mysql(data);
         for (int i = 0; i < data.size(); i++) {
                 sprintf(buf, "host %d\n", i);
                 conn.sendString(buf);
-                conn.sendString("\t" + data[i].getName() + "\n");
-                std::cout << data[i].getInfo() << std::endl;
-                conn.sendString("\t" + data[i].getInfo() + "\n");
+                conn.sendString("\tname: " + data[i].getName());
+                conn.sendString("\tinfo: " + data[i].getInfo());
         }
         conn.sendCmd("final\n", jdt::STRING_MASSAGE);
 }
