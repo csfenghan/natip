@@ -9,11 +9,11 @@ void set_client_information(jdt::Connection &conn) {
         natip::ClientData client_data;
         jdt::Value msg;
 
-        conn.sendCmd("please input your host name: ", jdt::STRING_MASSAGE);
+        conn.sendString("please input your host name: ");
         conn.recvMsg(msg);
         client_data.setName(msg.asStringData());
 
-        conn.sendCmd("input other info:", jdt::STRING_MASSAGE);
+        conn.sendString("input other info:");
         conn.recvMsg(msg);
         client_data.setInfo(msg.asStringData());
 

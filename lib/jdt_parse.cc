@@ -134,7 +134,7 @@ size_t Decode::size() const { return data_parsed_.size(); }
 void Decode::init() { status_ = PARSING_INIT; }
 
 // get a msg
-Value Decode::front() { return Value(data_parsed_.front()); }
+std::shared_ptr<Body> Decode::front() { return data_parsed_.front(); }
 void Decode::pop() { data_parsed_.pop(); }
 
 // hot many byters are needed for the message currently being parsed

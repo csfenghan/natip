@@ -17,7 +17,7 @@ void send_client_data(jdt::Connection &conn) {
         conn.recvMsg(msg);
         std::cout << msg.asStringData();
         fgets(buf, 1024, stdin);
-        conn.sendData(std::string(buf));
+        conn.sendString(std::string(buf));
 }
 
 void select_obj_host(jdt::Connection &conn) {

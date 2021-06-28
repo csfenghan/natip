@@ -22,7 +22,7 @@ class Connection {
 
         void sendString(std::string data) const;
 #ifdef JSONCPP
-        void sendData(Json::Value data) const;
+        void sendJson(Json::Value data) const;
 #endif
 
         // send a command

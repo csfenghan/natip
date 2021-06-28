@@ -34,7 +34,7 @@ void Connection::sendString(std::string data) const {
 }
 #ifdef JSONCPP
 // send file
-void Connection::sendData(Json::Value data) const {
+void Connection::sendJson(Json::Value data) const {
         Encode encode;
         uint32_t len;
         DetailType type;
@@ -84,7 +84,7 @@ bool Connection::recvMsg(Value &msg) {
                 fprintf(stderr, "decode error,decocde_ is empty\n");
                 return false;
         }
-        msg = decode_.front();
+        msg = Value(decode_.front());
         decode_.pop();
         return true;
 }

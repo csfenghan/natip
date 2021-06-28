@@ -6,7 +6,10 @@
 #define JDT_PARSER_HPP
 
 #include "jdt_body.hpp"
-#include "jdt_value.hpp"
+
+#ifdef JSONCPP
+#include "jsoncpp/json/json.h"
+#endif
 
 #include <deque>
 #include <memory>
@@ -61,7 +64,7 @@ class Decode {
         size_t size() const;
 
         // get a msg
-        Value front();
+        std::shared_ptr<Body> front();
         void pop();
 
         // hot many byters are needed for the message currently being parsed
